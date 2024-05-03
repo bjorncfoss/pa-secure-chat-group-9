@@ -13,7 +13,7 @@ public class Server implements Runnable {
     private final ServerSocket server;
     private ObjectInputStream in;
     private ObjectOutputStream out;
-    private HashMap<String, Integer> clients = new HashMap<>();
+    private HashMap<String, ObjectOutputStream> clients = new HashMap<>();
     private boolean isConnected = false;
     private Socket client;
 
@@ -37,6 +37,21 @@ public class Server implements Runnable {
                 client = server.accept ( );
                 in = new ObjectInputStream(client.getInputStream());
                 out = new ObjectOutputStream(client.getOutputStream());
+
+                Message messageObj = (Message) in.readObject();
+                String username= new String(messageObj.getMessage());
+
+                // Check if the username already exists
+                if (clients.containsKey(username)) {
+                    // If the username already exists, inform the client and close the connection
+                    out.writeObject("Username already exists. Please choose another username.");
+                    out.flush();
+                    client.close();
+                    continue; // Continue to accept new connections
+                }
+
+                // Add the client to the HashMap along with its output stream
+                clients.put(username, out);
                 // Process the request
                 Thread clientThread = new Thread(new ClientHandler(client, in , out , clients));
                 clientThread.start();
@@ -62,7 +77,8 @@ public class Server implements Runnable {
 
 
     }
-
+    //add client
+    //remove client
     /**
      * Closes the connection and the associated streams.
      *

@@ -6,7 +6,11 @@ import java.net.Socket;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class represents the sender of the message. It sends the message to the receiver by means of a socket. The use
@@ -38,11 +42,11 @@ public class Client {
      *
      * @throws IOException when an I/O error occurs when creating the socket
      */
-    public Client (int port) throws Exception {
+    public Client (int port, String nickname) throws Exception {
         client = new Socket ( HOST , port );
         out = new ObjectOutputStream ( client.getOutputStream ( ) );
         in = new ObjectInputStream ( client.getInputStream ( ) );
-        this.username = "";
+        this.username = nickname;
         isConnected = true;
         KeyPair keyPair = Encryption.generateKeyPair ( );
         privateKey = keyPair.getPrivate ( );
@@ -50,19 +54,43 @@ public class Client {
     }
 
     public void execute() throws IOException {
+        Scanner usrInput = new Scanner(System.in);
+        try {
+            if (isConnected) {
+                System.out.println("Username:" + username);
+                sendMessage(username);
+            }
+            // Thread for receiving messages
+            Thread receiveThread = new Thread(() -> {
+                try {
+                    while (isConnected) {
+                        receiveMessage();
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            });
+            receiveThread.start();
+            while (isConnected) {
+                String message = usrInput.nextLine();
+                sendMessage(message);
+            }
+        } finally {
+            closeConnection();
+        }
+    }
+    /*public void execute() throws IOException {
         Scanner usrInput = new Scanner ( System.in );
         try{
             if(isConnected){
-                System.out.println ( "Insert username");
-                username = usrInput.nextLine();
                 System.out.println("Username:"+ username);
+                sendMessage(username);
+
             }
             while(isConnected){
                 //verify messages
-                System.out.println ( "Envie a mensagem");
                 String message = usrInput.nextLine ( );
-                System.out.println ( "enviada");
-                sendMessage ( message );
+                sendMessage(message);
                 receiveMessage();
             }
             closeConnection();
@@ -71,11 +99,16 @@ public class Client {
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-    }
+    }*/
 
     public void sendMessage ( String message ) throws IOException {
+        //TODO:funcao que passa a string message para o objeto com destinatarios e remetente
+        List<String>recipients = extractRecipients ( message );
+        String userMessage= extractMessage(message);
         // Creates the message object
-        Message messageObj = new Message ( message.getBytes ( ) );
+        Message messageObj = new Message ( userMessage.getBytes ( ), recipients, username );
+        System.out.println ( messageObj.getRecipients() );
+        System.out.println ( messageObj.getMessage() );
         // Sends the message
         out.writeObject ( messageObj );
         out.flush();
@@ -83,7 +116,23 @@ public class Client {
 
     public void receiveMessage () throws IOException, ClassNotFoundException {
         Message messageObj = (Message) in.readObject();
-        System.out.println(new String(messageObj.getMessage()));
+        System.out.println(messageObj.getSender()+": "+ new  String(messageObj.getMessage()));
+    }
+
+    public static List<String> extractRecipients(String message) {
+        List<String> recipients = new ArrayList<>();
+        Pattern pattern = Pattern.compile("@(\\w+)");
+        Matcher matcher = pattern.matcher(message);
+
+        while (matcher.find()) {
+            recipients.add(matcher.group(1));
+        }
+        return recipients;
+    }
+
+    public static String extractMessage(String message) {
+        String messagem = message.replaceAll("@\\w+(,\\s*@\\w+)*", "").trim();
+        return messagem;
     }
     /**
      * Closes the connection by closing the socket and the streams.
