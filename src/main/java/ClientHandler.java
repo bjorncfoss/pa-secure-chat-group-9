@@ -9,17 +9,15 @@ public class ClientHandler implements Runnable {
     private final Socket client;
     private ObjectInputStream in;
     private ObjectOutputStream out;
-    private boolean isConnected;
     private HashMap<String, ObjectOutputStream> clientsList;
 
     public ClientHandler(Socket client, ObjectInputStream in, ObjectOutputStream out, HashMap<String, ObjectOutputStream> clients) {
         this.client = client;
         this.in=in;
         this.out=out;
-        this.isConnected = true;
         this.clientsList = clients;
     }
-
+    
     @Override
     public void run() {
         try {
@@ -50,12 +48,9 @@ public class ClientHandler implements Runnable {
                 recipientOutputStream.writeObject(messageObj);
                 recipientOutputStream.flush();
             } else {
-                // Handle caso o destinatário não esteja na lista
-                System.out.println("Destinatário " + recipient + " não encontrado.");
+                System.out.println("Recipient " + recipient + " not found.");
             }
         }
-        /*out.writeObject ( messageObj );
-        out.flush();*/
     }
     private void closeConnection() throws IOException {
         client.close();

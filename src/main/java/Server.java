@@ -61,33 +61,4 @@ public class Server implements Runnable {
             throw new RuntimeException ( e );
         }
     }
-
-    /**
-     * Processes the request from the client.
-     *
-     * @param in the input stream
-     *
-     * @throws IOException            if an I/O error occurs when reading stream header
-     * @throws ClassNotFoundException if the class of a serialized object cannot be found
-     */
-    private void process ( ObjectInputStream in) throws IOException, ClassNotFoundException {
-        // Reads the message object
-        Message messageObj = ( Message ) in.readObject ( );
-        System.out.println ( new String ( messageObj.getMessage ( ) ) );
-
-
-    }
-    //add client
-    //remove client
-    /**
-     * Closes the connection and the associated streams.
-     *
-     * @throws IOException if an I/O error occurs when closing the socket
-     */
-    private void closeConnection ( ) throws IOException {
-        client.close ( );
-        out.close ( );
-        in.close ( );
-    }
-
 }
