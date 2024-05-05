@@ -10,6 +10,7 @@ public class Message implements Serializable {
     private final byte[] message;
     private List<String> recipients;
     private String sender;
+
     /**
      * Constructs a Message object by specifying the message bytes that will be sent to the server.
      *
@@ -19,11 +20,6 @@ public class Message implements Serializable {
         this.message = message;
         this.recipients = recipients;
         this.sender=sender;
-    }
-    public Message (byte[] message) {
-        this.message = message;
-        this.recipients = new ArrayList<String>();
-        this.sender = "";
     }
 
     /**
