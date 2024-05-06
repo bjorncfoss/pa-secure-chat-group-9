@@ -28,24 +28,13 @@ public class Client {
     private final ObjectInputStream in;
     private final ObjectOutputStream out;
 
-    private final PublicKey publicRSAKey;
-    private final PrivateKey privateRSAKey;
-
     private final BigInteger privateDHKey;
     private final BigInteger publicDHKey;
-    private final PublicKey receiverPublicRSAKey;
+
+    private final Certificate certificate;
 
     private String username;
     private boolean isConnected;
-
-    // Public Key Construct
-    public PublicKey getPublicKey() {
-        return publicRSAKey;
-    }
-
-    public PrivateKey getPrivateKey() {
-        return privateRSAKey;
-    }
 
 
     /**
@@ -62,15 +51,11 @@ public class Client {
         in = new ObjectInputStream ( client.getInputStream ( ) );
         this.username = nickname;
         isConnected = true;
-        KeyPair keyPair = Encryption.generateKeyPair ( );
-        privateRSAKey = keyPair.getPrivate ( );
-        publicRSAKey = keyPair.getPublic ( );
 
         this.privateDHKey = DiffieHellman.generatePrivateKey ( );
         this.publicDHKey = DiffieHellman.generatePublicKey ( this.privateDHKey );
 
-        // Performs the RSA key distribution
-        receiverPublicRSAKey = rsaKeyDistribution ( );
+        this.certificate = new Certificate(username, publicDHKey, privateDHKey);
     }
 
 
@@ -84,8 +69,10 @@ public class Client {
             // Thread for receiving messages
             Thread receiveThread = new Thread(() -> {
                 try {
-                    while (isConnected) {
-                        receiveMessage();
+                    //while (isConnected) {
+                    Message message;
+                    while((message = (Message) in.readObject()) != null) {
+                        receiveMessage(message);
                     }
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
@@ -93,6 +80,9 @@ public class Client {
             });
             receiveThread.start();
             while (isConnected) {
+
+                System.out.print("Message...");
+
                 String message = usrInput.nextLine();
                 sendMessage(message);
             }
@@ -113,65 +103,13 @@ public class Client {
         List<String>recipients = extractRecipients ( message );
         String userMessage= extractMessage(message);
         // Creates the message object
-        Message messageObj = new Message ( userMessage.getBytes ( ), recipients, username );
+        Message messageObj = new Message ( userMessage.getBytes ( ), recipients, username, Message.messageType.USER_MESSAGE );
         // Sends the message
         out.writeObject ( messageObj );
         out.flush();
     }
 
-    private BigInteger agreeOnSharedSecret() throws Exception
-    {
-        BigInteger privateKey = DiffieHellman.generatePrivateKey();
-        BigInteger publicKey = DiffieHellman.generatePublicKey(privateKey);
-        BigInteger clientPublicKeyEncrypted = new BigInteger((byte[]) in.readObject());
-
-        // Decrypts the client's public key
-        BigInteger clientPublicKey = new BigInteger ( Encryption.decryptRSA ( clientPublicKeyEncrypted.toByteArray ( ) , receiverPublicRSAKey ) );
-
-        // Sends the server's public key to the client
-        sendPublicKey ( publicKey );
-
-        // Computes the shared secret
-        return DiffieHellman.computeSecret ( clientPublicKey , privateKey );
-    }
-
-    /**
-     * Sends the public key to the client.
-     *
-     * @param publicKey the public key to send
-     *
-     * @throws IOException if an I/O error occurs when sending the public key
-     */
-    private void sendPublicKey ( BigInteger publicKey ) throws Exception {
-        out.writeObject ( Encryption.encryptRSA ( publicKey.toByteArray ( ) , this.privateRSAKey ) );
-    }
-
-    /**
-     * Executes the key distribution protocol. The sender sends its public key to the receiver and receives the public
-     * key of the receiver.
-     *
-     * @return the public key of the sender
-     *
-     * @throws Exception when the key distribution protocol fails
-     */
-    private PublicKey rsaKeyDistribution () throws Exception
-    {
-        sendPublicRSAKey();
-        return (PublicKey) in.readObject();
-    }
-
-    /**
-     * Sends the public key of the sender to the receiver.
-     *
-     * @throws IOException when an I/O error occurs when sending the public key
-     */
-    private void sendPublicRSAKey ( ) throws IOException {
-        out.writeObject ( publicRSAKey );
-        out.flush ( );
-    }
-
-    public void receiveMessage () throws IOException, ClassNotFoundException {
-        Message messageObj = (Message) in.readObject();
+    public void receiveMessage (Message messageObj) throws IOException, ClassNotFoundException {
         System.out.println(messageObj.getSender()+": "+ new  String(messageObj.getMessage()));
     }
 
@@ -199,5 +137,9 @@ public class Client {
         client.close ( );
         out.close ( );
         in.close ( );
+    }
+
+    public BigInteger getPublicDHKey() {
+        return publicDHKey;
     }
 }

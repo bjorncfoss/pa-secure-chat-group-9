@@ -10,7 +10,7 @@ public class MainClient {
         Scanner usrInput = new Scanner ( System.in );
         System.out.println ( "Insert username");
         String nickname = usrInput.nextLine();
-        Client client = new Client ( 8000 , nickname);
+        Client client = new Client ( 9000 , nickname);
         client.execute ( );
     }
 }

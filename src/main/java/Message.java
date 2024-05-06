@@ -11,15 +11,28 @@ public class Message implements Serializable {
     private List<String> recipients;
     private String sender;
 
+    private messageType messageType;
+
     /**
      * Constructs a Message object by specifying the message bytes that will be sent to the server.
      *
      * @param message the message that is sent to the server
      */
-    public Message ( byte[] message, List<String> recipients, String sender  ) {
+    public Message ( byte[] message, List<String> recipients, String sender, messageType type  ) {
         this.message = message;
         this.recipients = recipients;
         this.sender=sender;
+        this.messageType = type;
+    }
+
+    public messageType getMessageType()
+    {
+        return this.messageType;
+    }
+
+    public static enum messageType
+    {
+        USER_MESSAGE, CERTIFICATE_VALIDATION
     }
 
     /**
