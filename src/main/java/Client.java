@@ -103,7 +103,7 @@ public class Client {
         List<String>recipients = extractRecipients ( message );
         String userMessage= extractMessage(message);
         // Creates the message object
-        Message messageObj = new Message ( userMessage.getBytes ( ), recipients, username, Message.messageType.USER_MESSAGE );
+        Message messageObj = new Message ( userMessage.getBytes ( ), recipients, username, Message.messageType.USER_MESSAGE, certificate );
         // Sends the message
         out.writeObject ( messageObj );
         out.flush();

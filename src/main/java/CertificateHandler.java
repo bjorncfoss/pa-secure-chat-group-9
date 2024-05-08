@@ -21,7 +21,8 @@ public class CertificateHandler implements Runnable {
     public void run() {
         try {
             process(in);
-        } catch (IOException | ClassNotFoundException e) {
+            Certificate.generateSampleCert();
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             try {
@@ -32,15 +33,17 @@ public class CertificateHandler implements Runnable {
         }
     }
 
-    private void process(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    private void process(ObjectInputStream in) throws Exception {
         Message message;
         while ((message = (Message) in.readObject()) != null) {
 
             switch(message.getMessageType())
             {
                 case USER_MESSAGE:
+                    sendMessage(message);
                     break;
                 case CERTIFICATE_VALIDATION:
+                    validateCertificate(message);
                     break;
             }
 
@@ -53,6 +56,18 @@ public class CertificateHandler implements Runnable {
     private void sendMessage( Message messageObj ) throws IOException {
 
         out.writeObject(messageObj);    //sends the message
+    }
+
+    private void validateCertificate( Message messageObj ) throws Exception
+    {
+        Certificate certificate = messageObj.getCertificate();
+
+        boolean isValid = isCertificateValid(certificate);
+    }
+
+    private boolean isCertificateValid(Certificate certificate)
+    {
+        return true;    // Certificate is valid
     }
 
     private void closeConnection() throws IOException {
