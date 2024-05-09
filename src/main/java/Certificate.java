@@ -15,9 +15,9 @@ import java.util.Date;
 public class Certificate implements Serializable {
 
     // attributes
-    private String id;
-    private final PublicKey publicRSAKey;
-    private final PrivateKey privateRSAKey;
+    private final String id;
+    private final BigInteger publicRSAKey;
+    private final BigInteger privateRSAKey;
     
     private static String certificateContent;
     
@@ -26,30 +26,35 @@ public class Certificate implements Serializable {
     private static BigInteger lastSerialNumber;
 
     // constructor
-    public Certificate() throws Exception {
+    public Certificate(String id, BigInteger publicRSAKey, BigInteger privateRSAKey) throws Exception {
 
-        //this.id = id;
-
-        // Encryption RSA
-        KeyPair keyPair = Encryption.generateKeyPair();
-        this.publicRSAKey = keyPair.getPublic();
-        this.privateRSAKey = keyPair.getPrivate();
+        this.id = id;
+        this.publicRSAKey = publicRSAKey;
+        this.privateRSAKey = privateRSAKey;
     }
 
-    public static void generateCertificate(KeyPair keyPair)
-    {
+    public static void generateCertificate(KeyPair keyPair) throws Exception {
+
+        byte[] encryptedPublic = Encryption.encryptRSA(keyPair.getPublic().getEncoded(), keyPair.getPublic());
+        byte[] encryptedPrivate = Encryption.encryptRSA(keyPair.getPrivate().getEncoded(), keyPair.getPrivate());
+
         // Create a serial number generator
         SerialNumberGenerator serialNumberGenerator = new SerialNumberGenerator();
 
         // Generate a serial number for the certificate
         BigInteger serialNumber = serialNumberGenerator.generateSerialNumber();
 
+        // Base64.getMimeEncoder().encodeToString(keyPair.getPrivate().getEncoded())
+
+        // Get current date
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String emissionDate = dateFormat.format(new Date());
+
+        // The certificate is only going to showcase the Public Key, not Private Key
         String certificateContent =
             "-----BEGIN CERTIFICATE-----\n" +
-            Base64.getMimeEncoder().encodeToString(keyPair.getPrivate().getEncoded()) +
-            "\n-----END CERTIFICATE-----\n" +
-            "-----BEGIN CERTIFICATE-----\n" +
                     "Serial: " + serialNumber.toString() + "\n" +
+                    "Date of Emission: " + emissionDate + "\n" +
                     "Public Key: \n" +
             Base64.getMimeEncoder().encodeToString(keyPair.getPublic().getEncoded()) +
             "\n-----END CERTIFICATE-----\n";
@@ -106,10 +111,10 @@ public class Certificate implements Serializable {
     // Getters
     public PublicKey getPublicRSAKey()
     {
-        return publicRSAKey;
+        return (PublicKey) publicRSAKey;
     }
     public PrivateKey getPrivateRSAKey()
     {
-        return privateRSAKey;
+        return (PrivateKey) privateRSAKey;
     }
 }

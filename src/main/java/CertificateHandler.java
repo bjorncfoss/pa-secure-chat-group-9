@@ -1,7 +1,7 @@
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.math.BigInteger;
 import java.net.Socket;
 
 public class CertificateHandler implements Runnable {
@@ -18,15 +18,29 @@ public class CertificateHandler implements Runnable {
 
     @Override
     public void run() {
-        try {
-            process();
-        } catch (Exception e) {
-            System.out.println("");
-        }
+
+        // Creates thread to display messages
+        new Thread(() -> {
+            try {
+                Message message;
+                while((message = (Message) in.readObject()) != null)
+                {
+                    process(message);
+                }
+                //process(in, out);
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    closeConnection();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
-    private void process() throws IOException, ClassNotFoundException {
-        Message message;
+    private void process(Message message) throws IOException, ClassNotFoundException {
         while ((message = (Message) in.readObject()) != null) {
             switch (message.getMessageType()) {
                 case USER_MESSAGE:
@@ -41,15 +55,17 @@ public class CertificateHandler implements Runnable {
 
     private void sendMessage(Message messageObj) throws IOException {
         out.writeObject(messageObj);
+        out.flush();
     }
 
     private void validateCertificate(Message messageObj) throws IOException {
+
+        String username = messageObj.getSender();
         Certificate certificate = messageObj.getCertificate();
-        boolean isValid = isCertificateValid(certificate);
     }
 
     private boolean isCertificateValid(Certificate certificate) {
-        // Implement certificate validation logic here
+        // TODO: Implement certificate validation here
         return true;
     }
 

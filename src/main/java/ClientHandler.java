@@ -11,7 +11,8 @@ public class ClientHandler implements Runnable {
     private ObjectOutputStream out;
     private HashMap<String, ObjectOutputStream> clientsList;
 
-    public ClientHandler(Socket client, ObjectInputStream in, ObjectOutputStream out, HashMap<String, ObjectOutputStream> clients) {
+    public ClientHandler(Socket client, ObjectInputStream in, ObjectOutputStream out, HashMap<String, ObjectOutputStream> clients)
+    {
         this.client = client;
         this.in=in;
         this.out=out;
@@ -22,10 +23,10 @@ public class ClientHandler implements Runnable {
     public void run() {
         try {
             Message message;
-            System.out.println("tetsankdlsa");
+            //System.out.println("tetsankdlsa");
             while((message = (Message) in.readObject()) != null)
             {
-                System.out.println("sadhjkasd");
+                //System.out.println("sadhjkasd");
                 process(message);
             }
             //process(in, out);

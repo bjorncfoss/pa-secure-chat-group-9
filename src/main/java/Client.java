@@ -2,6 +2,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -23,10 +25,10 @@ public class Client {
     private final ObjectInputStream in;
     private final ObjectOutputStream out;
 
-    private final BigInteger privateDHKey;
-    private final BigInteger publicDHKey;
+    //private final BigInteger privateDHKey;
+    //private final BigInteger publicDHKey;
 
-    private final Certificate certificate;
+    //private final Certificate certificate;
 
     private String username;
     private boolean isConnected;
@@ -47,12 +49,11 @@ public class Client {
         this.username = nickname;
         isConnected = true;
 
-        this.privateDHKey = DiffieHellman.generatePrivateKey ( );
-        this.publicDHKey = DiffieHellman.generatePublicKey ( this.privateDHKey );
+        //this.privateDHKey = DiffieHellman.generatePrivateKey ( );
+        //this.publicDHKey = DiffieHellman.generatePublicKey ( this.privateDHKey );
 
-        this.certificate = new Certificate();
+        //this.certificate = new Certificate();
     }
-
 
     public void execute() throws IOException {
         Scanner usrInput = new Scanner(System.in);
@@ -61,8 +62,9 @@ public class Client {
                 System.out.println("Username:" + username);
                 sendMessage(username);
             }
+
             // Thread for receiving messages
-            Thread receiveThread = new Thread(() -> {
+            new Thread(() -> {
                 try {
                     //while (isConnected) {
                     Message message;
@@ -73,14 +75,22 @@ public class Client {
                     e.printStackTrace();
                 }
             });
-            receiveThread.start();
+
             while (isConnected) {
 
-                System.out.print("Message...");
+                // Get the current date and time
+                LocalDateTime now = LocalDateTime.now();
+                // Format the date and time
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                // Get the formatted date and time
+                String formattedDateTime = now.format(formatter);
+                System.out.print(formattedDateTime + " ");
 
                 String message = usrInput.nextLine();
                 sendMessage(message);
             }
+
         } finally {
             closeConnection();
         }
@@ -98,7 +108,8 @@ public class Client {
         List<String>recipients = extractRecipients ( message );
         String userMessage= extractMessage(message);
         // Creates the message object
-        Message messageObj = new Message ( userMessage.getBytes ( ), recipients, username, Message.messageType.USER_MESSAGE, certificate );
+        Message messageObj = new Message ( userMessage.getBytes ( ), recipients, username, Message.messageType.USER_MESSAGE);
+        //Message messageObj = new Message ( userMessage.getBytes ( ), recipients, username, Message.messageType.USER_MESSAGE, certificate );
         // Sends the message
         out.writeObject ( messageObj );
         out.flush();
@@ -134,7 +145,4 @@ public class Client {
         in.close ( );
     }
 
-    public BigInteger getPublicDHKey() {
-        return publicDHKey;
-    }
 }
