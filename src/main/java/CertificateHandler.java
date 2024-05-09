@@ -1,44 +1,34 @@
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.List;
 
 public class CertificateHandler implements Runnable {
 
     private final Socket client;
-    private ObjectInputStream in;
-    private ObjectOutputStream out;
+    private final ObjectInputStream in;
+    private final ObjectOutputStream out;
 
     public CertificateHandler(Socket client, ObjectInputStream in, ObjectOutputStream out) {
         this.client = client;
-        this.in=in;
-        this.out=out;
+        this.in = in;
+        this.out = out;
     }
 
     @Override
     public void run() {
         try {
-            process(in);
-            Certificate.generateSampleCert();
+            process();
         } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                closeConnection();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            System.out.println("");
         }
     }
 
-    private void process(ObjectInputStream in) throws Exception {
+    private void process() throws IOException, ClassNotFoundException {
         Message message;
         while ((message = (Message) in.readObject()) != null) {
-
-            switch(message.getMessageType())
-            {
+            switch (message.getMessageType()) {
                 case USER_MESSAGE:
                     sendMessage(message);
                     break;
@@ -46,33 +36,27 @@ public class CertificateHandler implements Runnable {
                     validateCertificate(message);
                     break;
             }
-
-            //Message messageObj = (Message) in.readObject();
-            System.out.println(new String(message.getMessage()));
-            sendMessage(message);
         }
     }
 
-    private void sendMessage( Message messageObj ) throws IOException {
-
-        out.writeObject(messageObj);    //sends the message
+    private void sendMessage(Message messageObj) throws IOException {
+        out.writeObject(messageObj);
     }
 
-    private void validateCertificate( Message messageObj ) throws Exception
-    {
+    private void validateCertificate(Message messageObj) throws IOException {
         Certificate certificate = messageObj.getCertificate();
-
         boolean isValid = isCertificateValid(certificate);
     }
 
-    private boolean isCertificateValid(Certificate certificate)
-    {
-        return true;    // Certificate is valid
+    private boolean isCertificateValid(Certificate certificate) {
+        // Implement certificate validation logic here
+        return true;
     }
 
-    private void closeConnection() throws IOException {
+    private void closeConnection() throws Exception {
         client.close();
         out.close();
         in.close();
     }
+
 }

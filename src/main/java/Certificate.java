@@ -1,76 +1,115 @@
 import java.io.*;
 import java.math.BigInteger;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.text.SimpleDateFormat;
 import java.util.Base64;
+import java.util.Date;
 
 public class Certificate implements Serializable {
 
     // attributes
-    private final String id;
-    private final BigInteger publicRSAKey;
-    private final BigInteger privateRSAKey;
-
-    private String certificateContent;
+    private String id;
+    private final PublicKey publicRSAKey;
+    private final PrivateKey privateRSAKey;
+    
+    private static String certificateContent;
+    
+    // Serial Number
+    private static final BigInteger MAX_SERIAL_NUMBER = BigInteger.valueOf(Long.MAX_VALUE);
+    private static BigInteger lastSerialNumber;
 
     // constructor
-    public Certificate(String id, BigInteger publicKey, BigInteger privateKey)
-    {
-        this.id = id;
-        this.publicRSAKey = publicKey;
-        this.privateRSAKey = privateKey;
-        setContent();
+    public Certificate() throws Exception {
+
+        //this.id = id;
+
+        // Encryption RSA
+        KeyPair keyPair = Encryption.generateKeyPair();
+        this.publicRSAKey = keyPair.getPublic();
+        this.privateRSAKey = keyPair.getPrivate();
     }
 
-    // shows the certificate for public and private key
-    public void setContent ()
+    public static void generateCertificate(KeyPair keyPair)
     {
-        StringBuilder sb = new StringBuilder("-----BEGIN CERTIFICATE-----\n");
-        sb.append(privateRSAKey + "\n");
-        sb.append("-----END CERTIFICATE-----\n");
-        this.certificateContent = sb.toString();
+        // Create a serial number generator
+        SerialNumberGenerator serialNumberGenerator = new SerialNumberGenerator();
 
-        StringBuilder sb2 = new StringBuilder("-----BEGIN CERTIFICATE-----\n");
-        sb.append(publicRSAKey + "\n");
-        sb.append("-----END CERTIFICATE-----\n");
-        this.certificateContent += sb2.toString();
-    }
+        // Generate a serial number for the certificate
+        BigInteger serialNumber = serialNumberGenerator.generateSerialNumber();
 
-    // Generates 'certificates' folder on project folder
-    // This folder will store the .cert files
-    public static String certFolder()
-    {
-        // Name of the folder to be generated
-        String path = "/certificates";
-        File file = new File(path);
+        String certificateContent =
+            "-----BEGIN CERTIFICATE-----\n" +
+            Base64.getMimeEncoder().encodeToString(keyPair.getPrivate().getEncoded()) +
+            "\n-----END CERTIFICATE-----\n" +
+            "-----BEGIN CERTIFICATE-----\n" +
+                    "Serial: " + serialNumber.toString() + "\n" +
+                    "Public Key: \n" +
+            Base64.getMimeEncoder().encodeToString(keyPair.getPublic().getEncoded()) +
+            "\n-----END CERTIFICATE-----\n";
 
-        if (!file.exists())
-        {
-            file.mkdir();
+        // Folder to store PEM certificates
+        String certificatePath = "certificates/";
+
+        // Create the directory if it doesn't exist
+        File directory = new File(certificatePath);
+        if (!directory.exists()) {
+            directory.mkdirs(); // creates parent directories if not exists
         }
 
-        return file.getPath();
+        // Generate unique filename using timestamp
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String fileName = "certificate_" + timeStamp + ".cert";
+
+        // File path including directory
+        String filePath = certificatePath + fileName;
+
+        // Verifies if directory and file was created successfully
+        try (FileWriter fileWriter = new FileWriter(filePath)) {
+            fileWriter.write(certificateContent);
+            System.out.println("Certificate file created successfully at: " + filePath);
+
+            // TODO: Create endpoint here to establish CA Communication
+
+        } catch (IOException e) {
+            System.out.println("An error occurred while writing the file: " + e.getMessage());
+        }
     }
 
-    public static void generateCertificate(String folderPath, String fileName, String content)
+    public static class SerialNumberGenerator
     {
-        File file = new File(folderPath + File.separator + fileName + ".cert");
-
-        try {
-            FileWriter writer = new FileWriter(file);
-
-            writer.write(content);
-            writer.close();
+        public SerialNumberGenerator() {
+            // Initialize last serial number to a random value
+            lastSerialNumber = new BigInteger(MAX_SERIAL_NUMBER.bitLength(), new SecureRandom());
         }
-        catch (Exception e)
-        {
-            e.printStackTrace();
+
+        public synchronized BigInteger generateSerialNumber() {
+            // Increment the last serial number
+            lastSerialNumber = lastSerialNumber.add(BigInteger.ONE);
+
+            // Check if the new serial number exceeds the maximum value
+            if (lastSerialNumber.compareTo(MAX_SERIAL_NUMBER) > 0) {
+                // Reset the serial number to a random value if it exceeds the maximum
+                lastSerialNumber = new BigInteger(MAX_SERIAL_NUMBER.bitLength(), new SecureRandom());
+            }
+
+            return lastSerialNumber;
         }
     }
 
-    public static void generateSampleCert() throws Exception
+    // Getters
+    public PublicKey getPublicRSAKey()
     {
-        String folderPath = certFolder();
-        generateCertificate(folderPath, "certificate", "This is a sample .cert file.");
+        return publicRSAKey;
+    }
+    public PrivateKey getPrivateRSAKey()
+    {
+        return privateRSAKey;
     }
 }

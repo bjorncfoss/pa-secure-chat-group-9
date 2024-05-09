@@ -41,17 +41,17 @@ public class Server implements Runnable {
     @Override
     public void run ( ) {
         try {
-            System.out.println(1);
+            //System.out.println(1);
             while ( isConnected ) {
-                System.out.println(2);
+                //System.out.println(2);
                 client = server.accept ( );
-                System.out.println(3);
+                //System.out.println(3);
                 in = new ObjectInputStream(client.getInputStream());
                 out = new ObjectOutputStream(client.getOutputStream());
-                System.out.println(4);
+                //System.out.println(4);
                 Message messageObj = (Message) in.readObject();
                 String username= new String(messageObj.getMessage());
-                System.out.println(5);
+                //System.out.println(5);
                 // Check if the username already exists
                 if (clients.containsKey(username)) {
                     // If the username already exists, inform the client and close the connection
@@ -66,7 +66,6 @@ public class Server implements Runnable {
                 // Process the request
                 Thread clientThread = new Thread(new ClientHandler(client, in , out , clients));
                 clientThread.start();
-
             }
         } catch ( Exception e ) {
             throw new RuntimeException ( e );

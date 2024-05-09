@@ -47,6 +47,7 @@ public class ClientHandler implements Runnable {
             sendMessage(message);
         //}
     }
+
     private void sendMessage( Message messageObj ) throws IOException {
         List<String> recipients = messageObj.getRecipients();
         for (String recipient : recipients) {
@@ -59,6 +60,7 @@ public class ClientHandler implements Runnable {
             }
         }
     }
+
     private void closeConnection() throws IOException {
         client.close();
         out.close();

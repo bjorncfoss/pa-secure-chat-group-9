@@ -1,9 +1,7 @@
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
@@ -13,7 +11,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import java.math.BigInteger;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * This class represents the sender of the message. It sends the message to the receiver by means of a socket. The use
@@ -28,8 +25,8 @@ public class Client {
     private final ObjectInputStream in;
     private final ObjectOutputStream out;
 
-    private final BigInteger privateDHKey;
-    private final BigInteger publicDHKey;
+    private final PrivateKey privateDHKey;
+    private final PublicKey publicDHKey;
 
     private final Certificate certificate;
 
@@ -52,10 +49,10 @@ public class Client {
         this.username = nickname;
         isConnected = true;
 
-        this.privateDHKey = DiffieHellman.generatePrivateKey ( );
-        this.publicDHKey = DiffieHellman.generatePublicKey ( this.privateDHKey );
+        this.privateDHKey = (PrivateKey) DiffieHellman.generatePrivateKey ( );
+        this.publicDHKey = (PublicKey) DiffieHellman.generatePublicKey ((BigInteger) this.privateDHKey);
 
-        this.certificate = new Certificate(username, publicDHKey, privateDHKey);
+        this.certificate = new Certificate();
     }
 
 
@@ -137,9 +134,5 @@ public class Client {
         client.close ( );
         out.close ( );
         in.close ( );
-    }
-
-    public BigInteger getPublicDHKey() {
-        return publicDHKey;
     }
 }

@@ -19,7 +19,7 @@ public class Message implements Serializable {
      *
      * @param message the message that is sent to the server
      */
-    public Message ( byte[] message, List<String> recipients, String sender, messageType type, Certificate certificate ) {
+    public Message ( byte[] message, List<String> recipients, String sender, messageType type, Certificate certificate) {
         this.message = message;
         this.recipients = recipients;
         this.sender=sender;
