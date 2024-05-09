@@ -2,8 +2,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -25,8 +23,8 @@ public class Client {
     private final ObjectInputStream in;
     private final ObjectOutputStream out;
 
-    private final PrivateKey privateDHKey;
-    private final PublicKey publicDHKey;
+    private final BigInteger privateDHKey;
+    private final BigInteger publicDHKey;
 
     private final Certificate certificate;
 
@@ -49,8 +47,8 @@ public class Client {
         this.username = nickname;
         isConnected = true;
 
-        this.privateDHKey = (PrivateKey) DiffieHellman.generatePrivateKey ( );
-        this.publicDHKey = (PublicKey) DiffieHellman.generatePublicKey ((BigInteger) this.privateDHKey);
+        this.privateDHKey = DiffieHellman.generatePrivateKey ( );
+        this.publicDHKey = DiffieHellman.generatePublicKey ( this.privateDHKey );
 
         this.certificate = new Certificate();
     }
@@ -134,5 +132,9 @@ public class Client {
         client.close ( );
         out.close ( );
         in.close ( );
+    }
+
+    public BigInteger getPublicDHKey() {
+        return publicDHKey;
     }
 }
