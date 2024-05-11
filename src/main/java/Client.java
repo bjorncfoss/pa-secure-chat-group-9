@@ -1,16 +1,16 @@
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import java.math.BigInteger;
 
 /**
  * This class represents the sender of the message. It sends the message to the receiver by means of a socket. The use
@@ -19,21 +19,21 @@ import java.util.regex.Pattern;
 public class Client {
 
     private static final String HOST = "0.0.0.0";
+
+
     private final Socket client;
     private final ObjectInputStream in;
     private final ObjectOutputStream out;
-    private PublicKey publicKey = null;
-    private PrivateKey privateKey = null;
+
+    //private final BigInteger privateDHKey;
+    //private final BigInteger publicDHKey;
+
+    //private final Certificate certificate;
+
     private String username;
     private boolean isConnected;
 
-    public PublicKey getPublicKey() {
-        return publicKey;
-    }
 
-    public PrivateKey getPrivateKey() {
-        return privateKey;
-    }
     /**
      * Constructs a Sender object by specifying the port to connect to. The socket must be created before the sender can
      * send a message.
@@ -48,10 +48,13 @@ public class Client {
         in = new ObjectInputStream ( client.getInputStream ( ) );
         this.username = nickname;
         isConnected = true;
-        KeyPair keyPair = Encryption.generateKeyPair ( );
-        privateKey = keyPair.getPrivate ( );
-        publicKey = keyPair.getPublic ( );
+
+        //this.privateDHKey = DiffieHellman.generatePrivateKey ( );
+        //this.publicDHKey = DiffieHellman.generatePublicKey ( this.privateDHKey );
+
+        //this.certificate = new Certificate();
     }
+
     public void execute() throws IOException {
         Scanner usrInput = new Scanner(System.in);
         try {
@@ -59,37 +62,60 @@ public class Client {
                 System.out.println("Username:" + username);
                 sendMessage(username);
             }
+
             // Thread for receiving messages
-            Thread receiveThread = new Thread(() -> {
+            new Thread(() -> {
                 try {
-                    while (isConnected) {
-                        receiveMessage();
+                    //while (isConnected) {
+                    Message message;
+                    while((message = (Message) in.readObject()) != null) {
+                        receiveMessage(message);
                     }
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
                 }
             });
-            receiveThread.start();
+
             while (isConnected) {
+
+                // Get the current date and time
+                LocalDateTime now = LocalDateTime.now();
+                // Format the date and time
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                // Get the formatted date and time
+                String formattedDateTime = now.format(formatter);
+                System.out.print(formattedDateTime + " ");
+
                 String message = usrInput.nextLine();
                 sendMessage(message);
             }
+
         } finally {
             closeConnection();
         }
     }
+
+    /**
+     * Sends a message to the receiver using the OutputStream of the socket. The message is sent as an object of the
+     * {@link Message} class.
+     *
+     * @param message the message to send
+     *
+     * @throws IOException when the encryption or the integrity generation fails
+     */
     public void sendMessage ( String message ) throws IOException {
         List<String>recipients = extractRecipients ( message );
         String userMessage= extractMessage(message);
         // Creates the message object
-        Message messageObj = new Message ( userMessage.getBytes ( ), recipients, username );
+        Message messageObj = new Message ( userMessage.getBytes ( ), recipients, username, Message.messageType.USER_MESSAGE);
+        //Message messageObj = new Message ( userMessage.getBytes ( ), recipients, username, Message.messageType.USER_MESSAGE, certificate );
         // Sends the message
         out.writeObject ( messageObj );
         out.flush();
     }
 
-    public void receiveMessage () throws IOException, ClassNotFoundException {
-        Message messageObj = (Message) in.readObject();
+    public void receiveMessage (Message messageObj) throws IOException, ClassNotFoundException {
         System.out.println(messageObj.getSender()+": "+ new  String(messageObj.getMessage()));
     }
 
@@ -118,4 +144,5 @@ public class Client {
         out.close ( );
         in.close ( );
     }
+
 }

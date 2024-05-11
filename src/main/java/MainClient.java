@@ -8,9 +8,11 @@ public class MainClient {
      */
     public static void main ( String[] args ) throws Exception {
         Scanner usrInput = new Scanner ( System.in );
-        System.out.println ( "Insert username");
+
+        // Initial message when opening the client window
+        System.out.println ( "Insert new @username: ");
         String nickname = usrInput.nextLine();
-        Client client = new Client ( 8000 , nickname);
+        Client client = new Client ( 9000 , nickname);
         client.execute ( );
     }
 }
