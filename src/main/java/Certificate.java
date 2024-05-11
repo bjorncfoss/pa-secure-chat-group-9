@@ -4,52 +4,36 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.SecureRandom;
+import java.security.*;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
+import java.security.spec.RSAPublicKeySpec;
 
-/**
- * A class representing a digital certificate.
- */
 public class Certificate implements Serializable {
 
     // attributes
-    private final String id;
-    private final BigInteger publicRSAKey;
-    private final BigInteger privateRSAKey;
-    
+    private PublicKey publicRSAKey;
     private static String certificateContent;
-    
+
     // Serial Number
-    private static final BigInteger MAX_SERIAL_NUMBER = BigInteger.valueOf(Long.MAX_VALUE);
-    private static BigInteger lastSerialNumber;
+    private BigInteger serialNumber;
+    private String subject;
+    private String issuer;
+    private byte[] signature;
+    private Date emissionDate;
 
-    /**
-     * Constructs a Certificate object with the specified attributes.
-     *
-     * @param id The ID of the certificate.
-     * @param publicRSAKey The public RSA key of the certificate.
-     * @param privateRSAKey The private RSA key of the certificate.
-     * @throws Exception If an error occurs during certificate creation.
-     */
-    public Certificate(String id, BigInteger publicRSAKey, BigInteger privateRSAKey) throws Exception {
-
-        this.id = id;
+    // constructor
+    public Certificate(PublicKey publicRSAKey, String Subject){
         this.publicRSAKey = publicRSAKey;
-        this.privateRSAKey = privateRSAKey;
+        this.serialNumber = new SerialNumberGenerator().generateSerialNumber();
+        this.subject=Subject;
     }
 
-    /**
-     * Generates a digital certificate using the provided key pair.
-     *
-     * @param keyPair The key pair used to generate the certificate.
-     * @throws Exception If an error occurs during certificate generation.
-     */
     public static void generateCertificate(KeyPair keyPair) throws Exception {
+
+        //byte[] encryptedPublic = Encryption.encryptRSA(keyPair.getPublic().getEncoded(), keyPair.getPublic());
+        //byte[] encryptedPrivate = Encryption.encryptRSA(keyPair.getPrivate().getEncoded(), keyPair.getPrivate());
 
         // Create a serial number generator
         SerialNumberGenerator serialNumberGenerator = new SerialNumberGenerator();
@@ -65,12 +49,12 @@ public class Certificate implements Serializable {
 
         // The certificate is only going to showcase the Public Key, not Private Key
         String certificateContent =
-            "-----BEGIN CERTIFICATE-----\n" +
-                    "Serial: " + serialNumber.toString() + "\n" +
-                    "Date of Emission: " + emissionDate + "\n" +
-                    "Public Key: \n" +
-            Base64.getMimeEncoder().encodeToString(keyPair.getPublic().getEncoded()) +
-            "\n-----END CERTIFICATE-----\n";
+                "-----BEGIN CERTIFICATE-----\n" +
+                        "Serial: " + serialNumber.toString() + "\n" +
+                        "Date of Emission: " + emissionDate + "\n" +
+                        "Public Key: \n" +
+                        Base64.getMimeEncoder().encodeToString(keyPair.getPublic().getEncoded()) +
+                        "\n-----END CERTIFICATE-----\n";
 
         // Folder to store PEM certificates
         String certificatePath = "certificates/";
@@ -100,52 +84,119 @@ public class Certificate implements Serializable {
         }
     }
 
-    /**
-     * A class for generating serial numbers for certificates.
-     */
-    public static class SerialNumberGenerator
-    {
-        public SerialNumberGenerator() {
-            // Initialize last serial number to a random value
-            lastSerialNumber = new BigInteger(MAX_SERIAL_NUMBER.bitLength(), new SecureRandom());
+    public String toPEM(){
+        return
+                "-----BEGIN CERTIFICATE-----\n" +
+                        "Serial:" + serialNumber.toString() + "\n" +
+                        "Date of Emission:" + (emissionDate==null?"":emissionDate) + "\n" +
+                        "Public Key:" + (publicRSAKey==null?"":publicRSAKey.getEncoded())+ ",\n" +
+                        "Subject:" + (subject==null?"":subject)+ "\n" +
+                        "Issuer:"+ (issuer==null?"":subject)+ "\n" +
+                        "Signature:" + new String(getSignature()==null?new byte[0]:getSignature())+ "\n" +
+                        "\n-----END CERTIFICATE-----\n";
+    }
+    public void setValueFromPEM(String PEM){
+        int indexOfFieldName=PEM.indexOf("Serial:")+7;
+        serialNumber = new BigInteger(PEM.substring(indexOfFieldName,PEM.indexOf("\n",indexOfFieldName)));
+
+        indexOfFieldName=PEM.indexOf("Date of Emission:")+17;
+        String date = PEM.substring(indexOfFieldName,PEM.indexOf("\n",indexOfFieldName));
+        emissionDate = date.isEmpty()?null:new Date(date);
+
+        indexOfFieldName=PEM.indexOf("Public Key:")+11;
+        String key= PEM.substring(indexOfFieldName,PEM.indexOf(",\n",indexOfFieldName));
+        publicRSAKey = key.isEmpty()?null:getPublicKeyFromString(key);
+
+        indexOfFieldName=PEM.indexOf("Subject:")+8;
+        String subjectPEM= PEM.substring(indexOfFieldName,PEM.indexOf("\n",indexOfFieldName));
+        subject = subjectPEM.isEmpty()?null:new String(subjectPEM);
+
+        indexOfFieldName=PEM.indexOf("Issuer:")+7;
+        String issuerPEM= PEM.substring(indexOfFieldName,PEM.indexOf("\n",indexOfFieldName));
+        issuer = issuerPEM.isEmpty()?null:new String(issuerPEM);
+
+        indexOfFieldName=PEM.indexOf("Signature:")+10;
+        signature = (PEM.substring(indexOfFieldName,PEM.indexOf("\n",indexOfFieldName))).getBytes();
+    }
+
+    public static PublicKey getPublicKeyFromString(String publicKeyString) {
+        try {
+            String[] lines = publicKeyString.split("\n");
+
+            String modulusString = lines[2].substring(lines[2].indexOf(":")+2).trim();
+            String exponentString = lines[3].substring(lines[3].indexOf(":")+2).trim();
+
+            byte[] modulusBytes = decimalStringToByteArray(modulusString);
+            byte[] exponentBytes = decimalStringToByteArray(exponentString);
+
+            RSAPublicKeySpec keySpec = new RSAPublicKeySpec(new BigInteger(1, modulusBytes), new BigInteger(1, exponentBytes));
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            return keyFactory.generatePublic(keySpec);
         }
-
-        /**
-         * Generates a new serial number for a certificate.
-         *
-         * @return The generated serial number.
-         */
-        public synchronized BigInteger generateSerialNumber() {
-            // Increment the last serial number
-            lastSerialNumber = lastSerialNumber.add(BigInteger.ONE);
-
-            // Check if the new serial number exceeds the maximum value
-            if (lastSerialNumber.compareTo(MAX_SERIAL_NUMBER) > 0) {
-                // Reset the serial number to a random value if it exceeds the maximum
-                lastSerialNumber = new BigInteger(MAX_SERIAL_NUMBER.bitLength(), new SecureRandom());
-            }
-
-            return lastSerialNumber;
+        catch (Exception e){
+            throw new RuntimeException(e);
         }
     }
 
-    /**
-     * Gets the public RSA key of the certificate.
-     *
-     * @return The public RSA key.
-     */
-    public PublicKey getPublicRSAKey()
-    {
-        return (PublicKey) publicRSAKey;
+    public static byte[] decimalStringToByteArray(String s) {
+        int len = s.length();
+        byte[] data = new byte[len];
+        for (int i = 0; i < len; i++) {
+            data[i] = Byte.parseByte(s.substring(i, i + 1));
+        }
+        return data;
     }
 
-    /**
-     * Gets the private RSA key of the certificate.
-     *
-     * @return The private RSA key.
-     */
-    public PrivateKey getPrivateRSAKey()
-    {
-        return (PrivateKey) privateRSAKey;
+    // Getters
+    public PublicKey getPublicRSAKey() {
+        return publicRSAKey;
+    }
+
+    public static String getCertificateContent() {
+        return certificateContent;
+    }
+
+    public static void setCertificateContent(String certificateContent) {
+        Certificate.certificateContent = certificateContent;
+    }
+
+    public BigInteger getSerialNumber() {
+        return serialNumber;
+    }
+
+    public void setSerialNumber(BigInteger serialNumber) {
+        this.serialNumber = serialNumber;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public String getIssuer() {
+        return issuer;
+    }
+
+    public void setIssuer(String issuer) {
+        this.issuer = issuer;
+    }
+
+    public byte[] getSignature() {
+        return signature;
+    }
+
+    public void setSignature(byte[] signature) {
+        this.signature = signature;
+    }
+
+    public Date getEmissionDate() {
+        return emissionDate;
+    }
+
+    public void setEmissionDate(Date emissionDate) {
+        this.emissionDate = emissionDate;
     }
 }

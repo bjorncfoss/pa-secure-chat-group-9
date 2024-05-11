@@ -5,29 +5,26 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-/**
- * A class representing the Certificate Authority (CA) server.
- */
 public class CertificateServer {
 
-    /**
-     * The main method to start the CA server and generate certificates.
-     *
-     * @param args The command-line arguments (not used).
-     * @throws Exception If an error occurs while starting the server or generating certificates.
-     */
+    // Server CA - generates key for the CA
     public static void main ( String[] args ) throws Exception {
 
         // Generates Certificate
         KeyPair keyPair = Encryption.generateKeyPair();
-        Certificate.generateCertificate(keyPair);
-
+        System.out.println(keyPair.getPublic().getEncoded());
+        Certificate certificate = new Certificate(keyPair.getPublic(), "ola");
+        System.out.println(certificate.getPublicRSAKey());
+        String trollada = certificate.toPEM();
+        Certificate certificate2 = new Certificate(null, null);
+        certificate2.setValueFromPEM(trollada);
+        System.out.println(certificate2.getPublicRSAKey());
+        /*
         // Server to Generate Certificate
         Server server = new Server ( 8080 );
         Thread serverThread = new Thread ( server );
 
         // Initiates Server Thread
-        serverThread.start ( );
+        serverThread.start ( );*/
     }
-
 }
