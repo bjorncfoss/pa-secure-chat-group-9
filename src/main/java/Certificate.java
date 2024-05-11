@@ -35,8 +35,8 @@ public class Certificate implements Serializable {
 
     public static void generateCertificate(KeyPair keyPair) throws Exception {
 
-        byte[] encryptedPublic = Encryption.encryptRSA(keyPair.getPublic().getEncoded(), keyPair.getPublic());
-        byte[] encryptedPrivate = Encryption.encryptRSA(keyPair.getPrivate().getEncoded(), keyPair.getPrivate());
+        //byte[] encryptedPublic = Encryption.encryptRSA(keyPair.getPublic().getEncoded(), keyPair.getPublic());
+        //byte[] encryptedPrivate = Encryption.encryptRSA(keyPair.getPrivate().getEncoded(), keyPair.getPrivate());
 
         // Create a serial number generator
         SerialNumberGenerator serialNumberGenerator = new SerialNumberGenerator();
