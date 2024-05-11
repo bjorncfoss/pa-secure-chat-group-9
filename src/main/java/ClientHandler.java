@@ -48,8 +48,7 @@ public class ClientHandler implements Runnable {
             sendMessage(message);
         //}
     }
-
-    private void sendMessage( Message messageObj ) throws IOException {
+    protected void sendMessage( Message messageObj ) throws IOException {
         List<String> recipients = messageObj.getRecipients();
         for (String recipient : recipients) {
             ObjectOutputStream recipientOutputStream = clientsList.get(recipient);
