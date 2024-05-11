@@ -1,5 +1,8 @@
 import java.util.Scanner;
 
+/**
+ * A class representing the main client application.
+ */
 public class MainClient {
     /**
      * The main method of the client.

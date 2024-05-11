@@ -23,16 +23,30 @@ public class Message implements Serializable {
         this.messageType = type;
     }
 
-
+    /**
+     * Returns the type of the message.
+     *
+     * @return The type of the message as a messageType enum value.
+     */
     public messageType getMessageType()
     {
         return this.messageType;
     }
 
-    // ENUM TYPES (can add as many as we want)
+    /**
+     * Enumerated type representing different types of messages.
+     */
     public static enum messageType
     {
-        USER_MESSAGE, CERTIFICATE_VALIDATION
+        /**
+         * Represents a user message.
+         */
+        USER_MESSAGE,
+
+        /**
+         * Represents a certificate validation message.
+         */
+        CERTIFICATE_VALIDATION
     }
 
     /**

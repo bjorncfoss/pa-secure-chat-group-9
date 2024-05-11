@@ -12,6 +12,9 @@ import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
 
+/**
+ * A class representing a digital certificate.
+ */
 public class Certificate implements Serializable {
 
     // attributes
@@ -25,7 +28,14 @@ public class Certificate implements Serializable {
     private static final BigInteger MAX_SERIAL_NUMBER = BigInteger.valueOf(Long.MAX_VALUE);
     private static BigInteger lastSerialNumber;
 
-    // constructor
+    /**
+     * Constructs a Certificate object with the specified attributes.
+     *
+     * @param id The ID of the certificate.
+     * @param publicRSAKey The public RSA key of the certificate.
+     * @param privateRSAKey The private RSA key of the certificate.
+     * @throws Exception If an error occurs during certificate creation.
+     */
     public Certificate(String id, BigInteger publicRSAKey, BigInteger privateRSAKey) throws Exception {
 
         this.id = id;
@@ -33,10 +43,13 @@ public class Certificate implements Serializable {
         this.privateRSAKey = privateRSAKey;
     }
 
+    /**
+     * Generates a digital certificate using the provided key pair.
+     *
+     * @param keyPair The key pair used to generate the certificate.
+     * @throws Exception If an error occurs during certificate generation.
+     */
     public static void generateCertificate(KeyPair keyPair) throws Exception {
-
-        //byte[] encryptedPublic = Encryption.encryptRSA(keyPair.getPublic().getEncoded(), keyPair.getPublic());
-        //byte[] encryptedPrivate = Encryption.encryptRSA(keyPair.getPrivate().getEncoded(), keyPair.getPrivate());
 
         // Create a serial number generator
         SerialNumberGenerator serialNumberGenerator = new SerialNumberGenerator();
@@ -87,6 +100,9 @@ public class Certificate implements Serializable {
         }
     }
 
+    /**
+     * A class for generating serial numbers for certificates.
+     */
     public static class SerialNumberGenerator
     {
         public SerialNumberGenerator() {
@@ -94,6 +110,11 @@ public class Certificate implements Serializable {
             lastSerialNumber = new BigInteger(MAX_SERIAL_NUMBER.bitLength(), new SecureRandom());
         }
 
+        /**
+         * Generates a new serial number for a certificate.
+         *
+         * @return The generated serial number.
+         */
         public synchronized BigInteger generateSerialNumber() {
             // Increment the last serial number
             lastSerialNumber = lastSerialNumber.add(BigInteger.ONE);
@@ -108,11 +129,21 @@ public class Certificate implements Serializable {
         }
     }
 
-    // Getters
+    /**
+     * Gets the public RSA key of the certificate.
+     *
+     * @return The public RSA key.
+     */
     public PublicKey getPublicRSAKey()
     {
         return (PublicKey) publicRSAKey;
     }
+
+    /**
+     * Gets the private RSA key of the certificate.
+     *
+     * @return The private RSA key.
+     */
     public PrivateKey getPrivateRSAKey()
     {
         return (PrivateKey) privateRSAKey;

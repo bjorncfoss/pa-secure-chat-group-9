@@ -5,9 +5,17 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+/**
+ * A class representing the Certificate Authority (CA) server.
+ */
 public class CertificateServer {
 
-    // Server CA - generates key for the CA
+    /**
+     * The main method to start the CA server and generate certificates.
+     *
+     * @param args The command-line arguments (not used).
+     * @throws Exception If an error occurs while starting the server or generating certificates.
+     */
     public static void main ( String[] args ) throws Exception {
 
         // Generates Certificate

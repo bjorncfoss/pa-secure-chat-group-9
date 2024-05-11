@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 
 class UnitTests
-
 {
     @Nested
     @DisplayName("ClientHandler")
