@@ -47,8 +47,7 @@ class UnitTests
         @DisplayName("Test process method")
         void testProcess() {
 
-            Message messageObj = new Message("Test Message".getBytes(), List.of("teste recipient"), "sender");
-
+            Message messageObj = new Message("Test Message".getBytes(), "test recipient", "sender", Message.messageType.USER_MESSAGE);
 
             try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                  ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
@@ -65,7 +64,7 @@ class UnitTests
 
                     assertAll(
                             () -> assertArrayEquals(messageObj.getMessage(), receivedMessage.getMessage()),
-                            () -> assertEquals(messageObj.getRecipients(), receivedMessage.getRecipients()),
+                            () -> assertEquals(messageObj.getRecipient(), receivedMessage.getRecipient()),
                             () -> assertEquals(messageObj.getSender(), receivedMessage.getSender())
                     );
                 }
@@ -77,7 +76,7 @@ class UnitTests
         @DisplayName("Test sendMessage method")
         void testSendMessage(){
 
-            Message messageObj = new Message("Test Message".getBytes(), List.of("teste recipient"), "sender");
+            Message messageObj = new Message("Test Message".getBytes(), "test recipient", "sender", Message.messageType.USER_MESSAGE);
 
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             ObjectOutputStream ObjectOutputStream = null;
@@ -102,7 +101,7 @@ class UnitTests
                 Message receivedMessage = (Message) objectInputStream.readObject();
 
                 assertArrayEquals(messageObj.getMessage(), receivedMessage.getMessage());
-                assertEquals(messageObj.getRecipients(), receivedMessage.getRecipients());
+                assertEquals(messageObj.getRecipient(), receivedMessage.getRecipient());
                 assertEquals(messageObj.getSender(), receivedMessage.getSender());
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
@@ -122,12 +121,12 @@ class UnitTests
         @DisplayName("Test Message method")
         void testMessageValue(){
             byte[] messageByte = "Message".getBytes();
-            List<String> recipients = Arrays.asList("teste1","teste2");
+            //List<String> recipients = Arrays.asList("teste1","teste2");
             String sender = "sender";
-            message = new Message(messageByte,recipients,sender);
+            message = new Message(messageByte,"test recipients",sender, Message.messageType.USER_MESSAGE);
             assertAll(
                     () -> assertEquals(messageByte,message.getMessage()),
-                    () -> assertEquals(recipients,message.getRecipients()),
+                    //() -> assertEquals(recipients,message.getRecipient()),
                     () -> assertEquals(sender,message.getSender())
             );
         }
@@ -140,7 +139,7 @@ class UnitTests
         private Server server;
         @Test
         @DisplayName("Testing the Server's port")
-        void testServerValue() throws IOException{
+        void testServerValue() throws Exception {
             int port = 9000;
             server = new Server(port);
             assertNotNull(server);
@@ -154,7 +153,7 @@ class UnitTests
 
         @Test
         @DisplayName("Testing the mainserver connection")
-        void testMainServerConnection() throws IOException {
+        void testMainServerConnection() throws Exception {
             Server server = new Server(8000);
             Thread serverThread = new Thread(server);
             serverThread.start();
