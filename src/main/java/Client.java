@@ -64,28 +64,26 @@ public class Client {
             }
 
             // Thread for receiving messages
-            new Thread(() -> {
+            Thread receiveThread = new Thread(() -> {
                 try {
-                    //while (isConnected) {
-                    Message message;
-                    while((message = (Message) in.readObject()) != null) {
-                        receiveMessage(message);
+                    while (isConnected) {
+                        receiveMessage();
                     }
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
                 }
             });
-
+            receiveThread.start();
             while (isConnected) {
 
                 // Get the current date and time
-                LocalDateTime now = LocalDateTime.now();
+                //LocalDateTime now = LocalDateTime.now();
                 // Format the date and time
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                //DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
                 // Get the formatted date and time
-                String formattedDateTime = now.format(formatter);
-                System.out.print(formattedDateTime + " ");
+                //String formattedDateTime = now.format(formatter);
+                //System.out.print(formattedDateTime + " ");
 
                 String message = usrInput.nextLine();
                 sendMessage(message);
@@ -108,15 +106,28 @@ public class Client {
         List<String>recipients = extractRecipients ( message );
         String userMessage= extractMessage(message);
         // Creates the message object
-        Message messageObj = new Message ( userMessage.getBytes ( ), recipients, username, Message.messageType.USER_MESSAGE);
-        //Message messageObj = new Message ( userMessage.getBytes ( ), recipients, username, Message.messageType.USER_MESSAGE, certificate );
-        // Sends the message
-        out.writeObject ( messageObj );
-        out.flush();
+        if (!recipients.isEmpty()) {
+            for (String recipient : recipients) {
+                Message messageObj = new Message(userMessage.getBytes(), recipient, username, Message.messageType.USER_MESSAGE);
+                // Sends the message
+                out.writeObject(messageObj);
+                out.flush();
+            }
+        }else{
+            Message messageObj = new Message(message.getBytes(),"",username, Message.messageType.USER_MESSAGE);
+            // Sends the message
+            out.writeObject(messageObj);
+            out.flush();
+        }
     }
 
-    public void receiveMessage (Message messageObj) throws IOException, ClassNotFoundException {
-        System.out.println(messageObj.getSender()+": "+ new  String(messageObj.getMessage()));
+    public void receiveMessage () throws IOException, ClassNotFoundException {
+        Message messageObj = (Message) in.readObject();
+        if(messageObj.getMessageType()==Message.messageType.USER_MESSAGE) {
+            System.out.println(messageObj.getSender()+": "+ new  String(messageObj.getMessage()));
+        }else{
+            System.out.println("Invalid message type");
+        }
     }
 
     public static List<String> extractRecipients(String message) {

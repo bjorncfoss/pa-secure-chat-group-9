@@ -7,24 +7,22 @@ import java.util.List;
 public class Message implements Serializable {
 
     private final byte[] message;
-    private List<String> recipients;
+    private String recipient;
     private String sender;
-
     private messageType messageType;
-    private Certificate certificate;
 
     /**
      * Constructs a Message object by specifying the message bytes that will be sent to the server.
      *
      * @param message the message that is sent to the server
      */
-    public Message ( byte[] message, List<String> recipients, String sender, messageType type) {
+    public Message ( byte[] message, String recipients, String sender, messageType type) {
         this.message = message;
-        this.recipients = recipients;
+        this.recipient = recipients;
         this.sender=sender;
         this.messageType = type;
-        this.certificate = certificate;
     }
+
 
     public messageType getMessageType()
     {
@@ -37,11 +35,6 @@ public class Message implements Serializable {
         USER_MESSAGE, CERTIFICATE_VALIDATION
     }
 
-    public Certificate getCertificate()
-    {
-        return certificate;
-    }
-
     /**
      * Gets the message string.
      *
@@ -51,5 +44,5 @@ public class Message implements Serializable {
         return message;
     }
     public String getSender() { return sender; }
-    public List<String> getRecipients() { return recipients; }
+    public String getRecipient() { return recipient; }
 }

@@ -22,14 +22,7 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
-            Message message;
-            //System.out.println("tetsankdlsa");
-            while((message = (Message) in.readObject()) != null)
-            {
-                //System.out.println("sadhjkasd");
-                process(message);
-            }
-            //process(in, out);
+            process(in, out);
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         } finally {
@@ -41,23 +34,20 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void process(Message message) throws IOException, ClassNotFoundException {
-        //while (true) {
-            //Message messageObj = (Message) in.readObject();
-            System.out.println(new String(message.getMessage()));
-            sendMessage(message);
-        //}
+    private void process(ObjectInputStream in,ObjectOutputStream out) throws IOException, ClassNotFoundException {
+        while (true) {
+            Message messageObj = (Message) in.readObject();
+            sendMessage(messageObj);
+        }
     }
     protected void sendMessage( Message messageObj ) throws IOException {
-        List<String> recipients = messageObj.getRecipients();
-        for (String recipient : recipients) {
-            ObjectOutputStream recipientOutputStream = clientsList.get(recipient);
-            if (recipientOutputStream != null) {
-                recipientOutputStream.writeObject(messageObj);
-                recipientOutputStream.flush();
-            } else {
-                System.out.println("Recipient " + recipient + " not found.");
-            }
+        String recipient = messageObj.getRecipient();
+        ObjectOutputStream recipientOutputStream = clientsList.get(recipient);
+        if (recipientOutputStream != null) {
+            recipientOutputStream.writeObject(messageObj);
+            recipientOutputStream.flush();
+        } else {
+            System.out.println("Recipient " + recipient + " not found.");
         }
     }
 

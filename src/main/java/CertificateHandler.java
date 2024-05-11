@@ -61,7 +61,7 @@ public class CertificateHandler implements Runnable {
     private void validateCertificate(Message messageObj) throws IOException {
 
         String username = messageObj.getSender();
-        Certificate certificate = messageObj.getCertificate();
+        //Certificate certificate = messageObj.getCertificate();
     }
 
     private boolean isCertificateValid(Certificate certificate) {
