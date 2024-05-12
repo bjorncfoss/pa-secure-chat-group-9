@@ -1,5 +1,7 @@
 import java.io.IOException;
 
+// Javadoc: http://localhost:63342/pa-secure-chat-group-9/target/apidocs/package-summary.html
+
 /**
  * A class representing the main server application.
  */
