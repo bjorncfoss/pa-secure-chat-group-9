@@ -16,9 +16,8 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.*;
 
 
-
-class UnitTests {
-
+class UnitTests
+{
     @Nested
     @DisplayName("Certificate")
     class testCertificate {

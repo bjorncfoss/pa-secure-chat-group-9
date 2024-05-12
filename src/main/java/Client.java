@@ -20,15 +20,9 @@ public class Client {
 
     private static final String HOST = "0.0.0.0";
 
-
     private final Socket client;
     private final ObjectInputStream in;
     private final ObjectOutputStream out;
-
-    //private final BigInteger privateDHKey;
-    //private final BigInteger publicDHKey;
-
-    //private final Certificate certificate;
 
     private String username;
     private boolean isConnected;
@@ -55,6 +49,10 @@ public class Client {
         //this.certificate = new Certificate();
     }
 
+
+    /**
+     * @throws IOException if an I/O error occurs when opening the socket
+     */
     public void execute() throws IOException {
         Scanner usrInput = new Scanner(System.in);
         try {
@@ -121,6 +119,12 @@ public class Client {
         }
     }
 
+    /**
+     * Reads a Message object from the input stream and prints the sender and message content if the message type is USER_MESSAGE.
+     *
+     * @throws IOException If an I/O error occurs while reading the message.
+     * @throws ClassNotFoundException If the class of the serialized object cannot be found.
+     */
     public void receiveMessage () throws IOException, ClassNotFoundException {
         Message messageObj = (Message) in.readObject();
         if(messageObj.getMessageType()==Message.messageType.USER_MESSAGE) {
@@ -130,6 +134,12 @@ public class Client {
         }
     }
 
+    /**
+     * Extracts recipients mentioned in the message string using regular expressions.
+     *
+     * @param message The message string containing recipient mentions.
+     * @return A list of recipients extracted from the message.
+     */
     public static List<String> extractRecipients(String message) {
         List<String> recipients = new ArrayList<>();
         Pattern pattern = Pattern.compile("@(\\w+)");
@@ -141,10 +151,17 @@ public class Client {
         return recipients;
     }
 
+    /**
+     * Extracts the message content from the message string by removing recipient mentions.
+     *
+     * @param message The message string containing recipient mentions.
+     * @return The message content without recipient mentions.
+     */
     public static String extractMessage(String message) {
         String messagem = message.replaceAll("@\\w+(,\\s*@\\w+)*", "").trim();
         return messagem;
     }
+
     /**
      * Closes the connection by closing the socket and the streams.
      *
