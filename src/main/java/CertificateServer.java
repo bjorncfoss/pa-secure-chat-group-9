@@ -15,9 +15,9 @@ public class CertificateServer {
         System.out.println(keyPair.getPublic().getEncoded());
         Certificate certificate = new Certificate(keyPair.getPublic(), "ola");
         System.out.println(certificate.getPublicRSAKey());
-        String trollada = certificate.toPEM();
+        String PEMCertificate = certificate.toPEM();
         Certificate certificate2 = new Certificate(null, null);
-        certificate2.setValueFromPEM(trollada);
+        certificate2.setValueFromPEM(PEMCertificate);
         System.out.println(certificate2.getPublicRSAKey());
         /*
         // Server to Generate Certificate
