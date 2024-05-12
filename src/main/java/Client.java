@@ -19,11 +19,9 @@ import java.math.BigInteger;
 public class Client {
 
     private static final String HOST = "0.0.0.0";
-
     private final Socket client;
     private final ObjectInputStream in;
     private final ObjectOutputStream out;
-
     private String username;
     private boolean isConnected;
 
