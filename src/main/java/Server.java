@@ -20,8 +20,8 @@ public class Server implements Runnable {
     private ObjectInputStream in;
     private ObjectOutputStream out;
 
-    private HashMap<String, ObjectOutputStream> clients = new HashMap<>();
-    private boolean isConnected = false;
+    protected HashMap<String, ObjectOutputStream> clients = new HashMap<>();
+    protected boolean isConnected = false;
 
     private Socket client;
 

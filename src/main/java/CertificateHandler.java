@@ -53,7 +53,7 @@ public class CertificateHandler implements Runnable {
         }
     }
 
-    private void sendMessage(Message messageObj) throws IOException {
+    protected void sendMessage(Message messageObj) throws IOException {
         out.writeObject(messageObj);
         out.flush();
     }

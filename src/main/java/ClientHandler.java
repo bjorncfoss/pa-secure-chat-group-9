@@ -51,7 +51,7 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void closeConnection() throws IOException {
+    protected void closeConnection() throws IOException {
         client.close();
         out.close();
         in.close();
