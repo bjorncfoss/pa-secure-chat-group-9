@@ -50,12 +50,12 @@ class UnitTests
             byte[] messageByte = "Message".getBytes();
             String recipient = "recipient";
             String sender = "sender";
-            Message.messageType messageType = Message.messageType.USER_MESSAGE;
+            MessageTypes messageType = MessageTypes.USER_MESSAGE;
             message = new Message(messageByte, recipient, sender,messageType);
 
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
-            CertificateHandler certificateHandler = new CertificateHandler(null, null, objectOutputStream);
+            CertificateHandler certificateHandler = new CertificateHandler(null, null);
             //certificateHandler.sendMessage(message);
 
             // Verify the written bytes
@@ -186,7 +186,7 @@ class UnitTests
             byte[] messageByte = "Message".getBytes();
             String recipient = "recipient";
             String sender = "sender";
-            Message.messageType messageType = Message.messageType.USER_MESSAGE;
+            MessageTypes messageType = MessageTypes.USER_MESSAGE;
             message = new Message(messageByte, recipient, sender,messageType);
             assertAll(
                     () -> assertEquals(messageByte, message.getMessage()),
@@ -211,7 +211,7 @@ class UnitTests
             byte[] messageByte = "Message".getBytes();
             String recipient = "recipient";
             String sender = "sender";
-            Message.messageType messageType = Message.messageType.USER_MESSAGE;
+            MessageTypes messageType = MessageTypes.USER_MESSAGE;
             message = new Message(messageByte, recipient, sender,messageType);
             assertEquals("sender", message.getSender());
         }
@@ -222,7 +222,7 @@ class UnitTests
             byte[] messageByte = "Message".getBytes();
             String recipient = "recipient";
             String sender = "sender";
-            Message.messageType messageType = Message.messageType.USER_MESSAGE;
+            MessageTypes messageType = MessageTypes.USER_MESSAGE;
             message = new Message(messageByte, recipient, sender,messageType);
             assertArrayEquals(messageByte, message.getMessage());
         }

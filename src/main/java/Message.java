@@ -1,3 +1,4 @@
+import javax.xml.crypto.Data;
 import java.io.Serializable;
 import java.util.List;
 
@@ -9,14 +10,14 @@ public class Message implements Serializable {
     private final byte[] message;
     private String recipient;
     private String sender;
-    private messageType messageType;
+    private MessageTypes messageType;
 
     /**
      * Constructs a Message object by specifying the message bytes that will be sent to the server.
      *
      * @param message the message that is sent to the server
      */
-    public Message ( byte[] message, String recipients, String sender, messageType type) {
+    public Message ( byte[] message, String recipients, String sender, MessageTypes type) {
         this.message = message;
         this.recipient = recipients;
         this.sender=sender;
@@ -28,25 +29,9 @@ public class Message implements Serializable {
      *
      * @return The type of the message as a messageType enum value.
      */
-    public messageType getMessageType()
+    public MessageTypes getMessageType()
     {
         return this.messageType;
-    }
-
-    /**
-     * Enumerated type representing different types of messages.
-     */
-    public static enum messageType
-    {
-        /**
-         * Represents a user message.
-         */
-        USER_MESSAGE,
-
-        /**
-         * Represents a certificate validation message.
-         */
-        CERTIFICATE_VALIDATION
     }
 
     /**
