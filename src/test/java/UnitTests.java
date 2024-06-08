@@ -1,254 +1,149 @@
-// UnitTests.java
-/*
-import org.junit.jupiter.api.*;
-import java.io.*;
+
+// *------------------------*
+// *     UnitTests.java     *
+// *------------------------*
+
+// Include necessary imports
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
 import java.math.BigInteger;
+import java.net.BindException;
+import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.security.PublicKey;
+import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-//test
-class UnitTests
-{
-    @Nested
-    @DisplayName("Certificate")
-    class testCertificate {
+// Main class for all Unit Tests
+public class UnitTests {
 
-        private static final BigInteger MAX_SERIAL_NUMBER = BigInteger.valueOf(Long.MAX_VALUE);
-        @Test
-        @DisplayName("Testing SerialNumberGenerator")
-        void testSerialNumberGenerator() throws NoSuchFieldException, IllegalAccessException {
-            SerialNumberGenerator generator = new SerialNumberGenerator();
-            Set<BigInteger> generatedSerialNumbers = new HashSet<>();
-
-            // Act & Assert
-            for (int i = 0; i < 1000; i++) {
-                BigInteger serialNumber = generator.generateSerialNumber();
-                assertTrue(serialNumber.compareTo(BigInteger.ZERO) > 0, "Serial number should be greater than zero");
-                assertTrue(serialNumber.compareTo(MAX_SERIAL_NUMBER) <= 0, "Serial number should not exceed MAX_SERIAL_NUMBER");
-
+    @Test
+    @DisplayName("Tests the Main Server Connection!")
+    public void testMainServer() {
+        try {
+            ServerSocket serverSocket = null;
+            try {
+                MainServer.main(new String[]{});
+                serverSocket = new ServerSocket(9000);
+                fail("Server socket should already be in use");
+            } catch (BindException e) {
+                // expected exception, server socket is already in use
+            } finally {
+                if (serverSocket != null) {
+                    serverSocket.close();
+                }
             }
-        }
-
-    }
-
-    @Nested
-    @DisplayName("CertificateHandler")
-    class testCertificateHandler{
-        private Message message;
-        @Test
-        @DisplayName("Testing sendMessage method")
-        void testSendMessage() throws IOException {
-            byte[] messageByte = "Message".getBytes();
-            String recipient = "recipient";
-            String sender = "sender";
-            MessageTypes messageType = MessageTypes.USER_MESSAGE;
-            message = new Message(messageByte, recipient, sender,messageType);
-
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
-            CertificateHandler certificateHandler = new CertificateHandler(null, null);
-            //certificateHandler.sendMessage(message);
-
-            // Verify the written bytes
-            byte[] writtenBytes = byteArrayOutputStream.toByteArray();
-            assertNotNull(writtenBytes);
-            assertTrue(writtenBytes.length > 0);
-        }
-
-    }
-
-    @Nested
-    @DisplayName("Server")
-    class testServer{
-        @Test
-        void testServerConnection() throws Exception {
-
-            Server server = new Server(1500);
-            Thread serverThread = new Thread(server);
-            serverThread.start();
-
-            assertTrue(serverThread.isAlive());
+        } catch (Exception e) {
+            fail("Main method should not throw an exception");
         }
     }
 
+    // Certificate.java related
 
     @Nested
-    @DisplayName("ClientHandler")
-    class testClientHandler {
-
-    }
-
-    @Nested
-    @DisplayName("DiffieHellman")
-    class testDiffieHellman{
-        @Test
-        @DisplayName("Testing generatePrivateKey method")
-        public void testGeneratePrivateKey() throws NoSuchAlgorithmException {
-            BigInteger privateKey = DiffieHellman.generatePrivateKey();
-            assertNotNull(privateKey);
-        }
+    @DisplayName("Test: Certificate.java ")
+    class CertificateTest {
 
         @Test
-        @DisplayName("Testing generatePublicKey method")
-        public void testGeneratePublicKey() throws NoSuchAlgorithmException {
-            BigInteger privateKey = DiffieHellman.generatePrivateKey();
-            BigInteger publicKey = DiffieHellman.generatePublicKey(privateKey);
-            assertNotNull(publicKey);
-        }
+        public void testCertificate() throws Exception {
 
-        @Test
-        @DisplayName("Testing computeSecret method")
-        public void testComputeSecret() throws NoSuchAlgorithmException {
-            BigInteger User1PrivateKey = DiffieHellman.generatePrivateKey();
-            BigInteger User2PrivateKey = DiffieHellman.generatePrivateKey();
-
-            BigInteger User1PublicKey = DiffieHellman.generatePublicKey(User1PrivateKey);
-            BigInteger User2PublicKey = DiffieHellman.generatePublicKey(User2PrivateKey);
-
-            BigInteger User1Secret = DiffieHellman.computeSecret(User2PublicKey, User1PrivateKey);
-            BigInteger User2Secret = DiffieHellman.computeSecret(User1PublicKey, User2PrivateKey);
-
-            assertEquals(User1Secret, User2Secret);
-        }
-    }
-
-    @Nested
-    @DisplayName("Encryption")
-    class testEncryption{
-        @Test
-        @DisplayName("testing Encrytion and Decryption with AES methods")
-        public void testEncryptAndDecryptAES() throws Exception {
-            String message = "Test Message";
-            byte[] secretKey = "15236984qas".getBytes();
-            byte[] encryptedMessage = Encryption.encryptAES(message.getBytes(), secretKey);
-            byte[] decryptedMessage = Encryption.decryptAES(encryptedMessage, secretKey);
-            assertEquals(message, new String(decryptedMessage));
-        }
-
-        @Test
-        @DisplayName("testing Encrytion and Decryption with RSA methods")
-        public void testEncryptAndDecryptRSA() throws Exception {
-            String message = "Test Message";
             KeyPair keyPair = Encryption.generateKeyPair();
-            byte[] encryptedMessage = Encryption.encryptRSA(message.getBytes(), keyPair.getPublic());
-            byte[] decryptedMessage = Encryption.decryptRSA(encryptedMessage, keyPair.getPrivate());
-            assertEquals(message, new String(decryptedMessage));
+            PublicKey publicKey = keyPair.getPublic();
+            String subject = "subject";
+            Certificate certificate = new Certificate(publicKey, subject);
+
+            assertEquals(publicKey, certificate.getPublicRSAKey());
+            assertEquals(subject, certificate.getSubject());
+            assertNotNull(certificate.getSerialNumber());
+            //assertNotNull(certificate.getEmissionDate());
+            assertNull(certificate.getIssuer());
+            assertNull(certificate.getSignature());
         }
 
         @Test
-        @DisplayName("testing generateKeyPair method")
-        public void testGenerateKeyPair() throws Exception {
+        @DisplayName("Tests if the correct Issuer is set on the Certificate")
+        public void testSetIssuer() throws Exception {
+
             KeyPair keyPair = Encryption.generateKeyPair();
-            assertAll(
-                    () ->assertNotNull(keyPair),
-                    () ->assertNotNull(keyPair.getPublic()),
-                    () ->assertNotNull(keyPair.getPrivate())
-            );
+            PublicKey publicKey = keyPair.getPublic();
+            String subject = "subject";
+            Certificate certificate = new Certificate(publicKey, subject);
+
+            String issuer = "issuer";
+            certificate.setIssuer(issuer);
+            assertEquals(issuer, certificate.getIssuer());
         }
+
+        @Test
+        @DisplayName("Tests if Certificate was signed")
+        public void testSetSignature() throws Exception {
+
+            KeyPair keyPair = Encryption.generateKeyPair();
+            PublicKey publicKey = keyPair.getPublic();
+            String subject = "subject";
+            Certificate certificate = new Certificate(publicKey, subject);
+
+            byte[] signature = new byte[1024]; // specify the size of the byte array
+            certificate.setSignature(signature);
+
+            assertArrayEquals(signature, certificate.getSignature());
+        }
+
+        @Test
+        @DisplayName("Tests if the correct Emission Date was applied to the Certificate")
+        public void testSetEmissionDate() throws Exception {
+
+            KeyPair keyPair = Encryption.generateKeyPair();
+            PublicKey publicKey = keyPair.getPublic();
+            String subject = "subject";
+            Certificate certificate = new Certificate(publicKey, subject);
+
+            Date emissionDate = new Date();
+            certificate.setEmissionDate(emissionDate);
+            assertEquals(emissionDate, certificate.getEmissionDate());
+        }
+
+
     }
+
+    // Encryption.java related
 
     @Nested
-    @DisplayName("Integrity")
-    public class testIntegrity {
+    @DisplayName(" Test RSA Encryption ")
+    class EncryptionTests {
 
         @Test
-        @DisplayName("Testing generate and verify Digest methods")
-        public void testDigest() throws Exception {
-            String message = "Test Message";
-            byte[] messageBytes = message.getBytes();
-            byte[] digest = Integrity.generateDigest(messageBytes);
-            assertNotNull(digest);
-            boolean verifyDigestTrue = Integrity.verifyDigest(digest, Integrity.generateDigest(messageBytes));
-            assertTrue(verifyDigestTrue);
-            messageBytes[0] = 'A';
-            boolean verifyDigestFalse = Integrity.verifyDigest(digest, Integrity.generateDigest(messageBytes));
-            assertFalse(verifyDigestFalse);
+        @DisplayName("Tests the RSA Message Encryption")
+        public void testMessageEncryption() throws Exception {
+
+            KeyPair keyPair = Encryption.generateKeyPair();
+            byte[] message = "message".getBytes();
+            byte[] encrypted = Encryption.encryptRSA(message, keyPair.getPublic());
+            byte[] decrypted = Encryption.decryptRSA(encrypted, keyPair.getPrivate());
+
+            assertArrayEquals(message, decrypted);
         }
     }
-    @Nested
-    @DisplayName("Message")
-    class testMessage {
 
-        private Message message;
-
-        @Test
-        @DisplayName("Test Message method")
-        void testMessageValue() {
-            byte[] messageByte = "Message".getBytes();
-            String recipient = "recipient";
-            String sender = "sender";
-            MessageTypes messageType = MessageTypes.USER_MESSAGE;
-            message = new Message(messageByte, recipient, sender,messageType);
-            assertAll(
-                    () -> assertEquals(messageByte, message.getMessage()),
-                    () -> assertEquals(recipient, message.getRecipient()),
-                    () -> assertEquals(sender, message.getSender()),
-                    () -> assertEquals(messageType, message.getMessageType())
-            );
-        }
-
-    }
-
-
+    // Integrity.java related
 
     @Nested
-    @DisplayName("Client")
-    class testClient {
-
-        private Message message;
-        @Test
-        @DisplayName("Testing the sendMessage method")
-        void testSendMessage() throws IOException {
-            byte[] messageByte = "Message".getBytes();
-            String recipient = "recipient";
-            String sender = "sender";
-            MessageTypes messageType = MessageTypes.USER_MESSAGE;
-            message = new Message(messageByte, recipient, sender,messageType);
-            assertEquals("sender", message.getSender());
-        }
+    @DisplayName(" Test: Integrity.java ")
+    class testIntegrity {
 
         @Test
-        @DisplayName("Testing the recieveMessage method")
-        void testRecieveMesaage() {
-            byte[] messageByte = "Message".getBytes();
-            String recipient = "recipient";
-            String sender = "sender";
-            MessageTypes messageType = MessageTypes.USER_MESSAGE;
-            message = new Message(messageByte, recipient, sender,messageType);
-            assertArrayEquals(messageByte, message.getMessage());
-        }
+        @DisplayName("Tests the Message Integrity - SHA-256")
+        public void testMessageIntegrity() throws Exception {
+            byte[] message = "message".getBytes();
+            byte[] digest = Integrity.generateDigest(message);
 
-
-        @Test
-        @DisplayName("Testing the extractRecipients method")
-        public void testExtractRecipients() {
-            String message = "Testing @username1 and @username2!";
-            List<String> expectedRecipients = Arrays.asList("username1", "username2");
-
-            List<String> actualRecipients = Client.extractRecipients(message);
-
-            assertEquals(expectedRecipients, actualRecipients);
-        }
-
-        @Test
-        @DisplayName("Testing the extractMessage method")
-        public void testExtractMessage() {
-            String message = "Testing @user1";
-            String expectedMessage = "Testing";
-
-            String actualMessage = Client.extractMessage(message);
-
-            assertEquals(expectedMessage, actualMessage);
+            assertTrue(Integrity.verifyDigest(digest, Integrity.generateDigest(message)));
         }
     }
+
+
 }
-*/
