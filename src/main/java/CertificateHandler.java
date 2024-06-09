@@ -149,17 +149,6 @@ public class CertificateHandler implements Runnable {
     }
 
     /**
-     * Checks if a given certificate is valid.
-     *
-     * @param certificate The Certificate object to be validated.
-     * @return true if the certificate is valid; otherwise, false.
-     */
-    protected boolean isCertificateValid(Certificate certificate) {
-        // TODO: Implement certificate validation here
-        return true;
-    }
-
-    /**
      * @throws Exception if the connection is not closing.
      */
     private void closeConnection() throws Exception {

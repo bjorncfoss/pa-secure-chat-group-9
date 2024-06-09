@@ -9,16 +9,21 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import javax.security.auth.Subject;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.ReentrantLock;
 
+// Includes all type of Asserts
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UnitTests
@@ -57,6 +62,7 @@ public class UnitTests
     class CertificateTest {
 
         @Test
+        @DisplayName("Tests the Certificate Creation")
         public void testCertificate() throws Exception {
 
             KeyPair keyPair = Encryption.generateKeyPair();
@@ -69,6 +75,28 @@ public class UnitTests
                     () -> assertEquals(subject, certificate.getSubject()),
                     () -> assertNull(certificate.getIssuer()),
                     () -> assertNull(certificate.getSignature())
+            );
+        }
+
+        @Test
+        @DisplayName("Verifies that the getCertificateContent method returns the expected certificate content.")
+        void testGetCertificateContent() {
+            String expectedContent = "Test Certificate Content";
+            Certificate.setCertificateContent(expectedContent);
+
+            assertAll(
+                    () -> assertEquals(expectedContent, Certificate.getCertificateContent())
+            );
+        }
+
+        @Test
+        @DisplayName("Verifies that the setCertificateContent method sets the certificate content correctly.")
+        void testSetCertificateContent() {
+            String newContent = "New Certificate Content";
+            Certificate.setCertificateContent(newContent);
+
+            assertAll(
+                    () -> assertEquals(newContent, Certificate.getCertificateContent())
             );
         }
 
@@ -120,6 +148,22 @@ public class UnitTests
 
             assertAll(
                     () -> assertEquals(emissionDate, certificate.getEmissionDate())
+            );
+        }
+
+        @Test
+        void testSetSubject() throws Exception {
+
+            KeyPair keyPair = Encryption.generateKeyPair();
+            PublicKey publicKey = keyPair.getPublic();
+            String subject = "subject";
+            Certificate certificate = new Certificate(publicKey, subject);
+
+            String newSubject = "New Subject";
+            certificate.setSubject(newSubject);
+
+            assertAll(
+                    () -> assertEquals(newSubject, certificate.getSubject())
             );
         }
 
@@ -208,11 +252,11 @@ public class UnitTests
 
 
     @Nested
-    @DisplayName("test: CertificateHandler.java")
+    @DisplayName("Test: CertificateHandler.java")
     class testCertificateHandler {
 
-
     }
+
 
     @Nested
     @DisplayName("Test: CertificateServer.java ")
@@ -242,8 +286,8 @@ public class UnitTests
             client.close();
             serverSocket.close();
         }
-
     }
+
 
     @Nested
     @DisplayName("Test: ClientHandler.java")
@@ -251,9 +295,11 @@ public class UnitTests
 
     }
 
+
     @Nested
     @DisplayName("test: DiffieHellman.java")
     class testDiffieHellman {
+
         @Test
         @DisplayName("Testing generatePrivateKey method")
         public void testGeneratePrivateKey() throws NoSuchAlgorithmException {
@@ -295,8 +341,8 @@ public class UnitTests
 
 
     @Nested
-    @DisplayName(" Test RSA Encryption ")
-    class EncryptionTests {
+    @DisplayName(" Test: Encryption ")
+    class testEncryption {
 
         @Test
         @DisplayName("Tests the RSA Message Encryption")
@@ -309,6 +355,34 @@ public class UnitTests
 
             assertAll(
                     () -> assertArrayEquals(message, decrypted)
+            );
+        }
+
+        @Test
+        @DisplayName("Test AES Encryption")
+        void testEncryptAES() throws Exception {
+            byte[] message = "Hello, World!".getBytes();
+            byte[] secretKey = "mySecretKey".getBytes();
+            byte[] encryptedMessage = Encryption.encryptAES(message, secretKey);
+
+            // Verify that the encrypted message is not equal to the original message
+            assertAll(
+                    () -> assertNotEquals(message, encryptedMessage)
+            );
+
+        }
+
+        @Test
+        @DisplayName("Test AES Decryption")
+        void testDecryptAES() throws Exception {
+            byte[] message = "Hello, World!".getBytes();
+            byte[] secretKey = "mySecretKey".getBytes();
+            byte[] encryptedMessage = Encryption.encryptAES(message, secretKey);
+            byte[] decryptedMessage = Encryption.decryptAES(encryptedMessage, secretKey);
+
+            // Verify that the decrypted message is equal to the original message
+            assertAll(
+                    () -> assertArrayEquals(message, decryptedMessage)
             );
         }
     }
@@ -374,6 +448,24 @@ public class UnitTests
         }
     }
 
+    @Nested
+    @DisplayName("Test: SerialNumberGenerator.java")
+    class testSerialNumberGenerator {
+
+        @Test
+        @DisplayName(" Test Serial Number Generator ")
+        void testGenerateSerialNumber() {
+            SerialNumberGenerator generator = new SerialNumberGenerator();
+            BigInteger initialSerialNumber = generator.generateSerialNumber();
+            BigInteger newSerialNumber = generator.generateSerialNumber();
+
+            // Verify that the new serial number is one more than the initial serial number
+            assertAll(
+                    () -> assertEquals(initialSerialNumber.add(BigInteger.ONE), newSerialNumber)
+            );
+        }
+
+    }
 
     @Nested
     @DisplayName("Test: User.java")
