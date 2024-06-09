@@ -13,6 +13,7 @@ import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.util.Date;
 
@@ -145,5 +146,61 @@ public class UnitTests {
         }
     }
 
+    @Nested
+    @DisplayName("test: Message.java")
+    class testMessage {
+
+        private Message message;
+
+        @Test
+        @DisplayName("Test Message method")
+        void testMessageValue() {
+            byte[] messageByte = "Message".getBytes();
+            String recipient = "recipient";
+            String sender = "sender";
+            MessageTypes messageType = MessageTypes.USER_MESSAGE;
+            message = new Message(messageByte, recipient, sender,messageType);
+            assertAll(
+                    () -> assertEquals(messageByte, message.getMessage()),
+                    () -> assertEquals(recipient, message.getRecipient()),
+                    () -> assertEquals(sender, message.getSender()),
+                    () -> assertEquals(messageType, message.getMessageType())
+            );
+        }
+
+    }
+    @Nested
+    @DisplayName("test: DiffieHellman.java")
+    class testDiffieHellman{
+        @Test
+        @DisplayName("Testing generatePrivateKey method")
+        public void testGeneratePrivateKey() throws NoSuchAlgorithmException {
+            BigInteger privateKey = DiffieHellman.generatePrivateKey();
+            assertNotNull(privateKey);
+        }
+
+        @Test
+        @DisplayName("Testing generatePublicKey method")
+        public void testGeneratePublicKey() throws NoSuchAlgorithmException {
+            BigInteger privateKey = DiffieHellman.generatePrivateKey();
+            BigInteger publicKey = DiffieHellman.generatePublicKey(privateKey);
+            assertNotNull(publicKey);
+        }
+
+        @Test
+        @DisplayName("Testing computeSecret method")
+        public void testComputeSecret() throws NoSuchAlgorithmException {
+            BigInteger User1PrivateKey = DiffieHellman.generatePrivateKey();
+            BigInteger User2PrivateKey = DiffieHellman.generatePrivateKey();
+
+            BigInteger User1PublicKey = DiffieHellman.generatePublicKey(User1PrivateKey);
+            BigInteger User2PublicKey = DiffieHellman.generatePublicKey(User2PrivateKey);
+
+            BigInteger User1Secret = DiffieHellman.computeSecret(User2PublicKey, User1PrivateKey);
+            BigInteger User2Secret = DiffieHellman.computeSecret(User1PublicKey, User2PrivateKey);
+
+            assertEquals(User1Secret, User2Secret);
+        }
+    }
 
 }
