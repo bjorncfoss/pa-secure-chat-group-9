@@ -8,17 +8,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.math.BigInteger;
 import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
+import java.security.*;
+import java.util.Base64;
 import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -159,31 +155,7 @@ public class UnitTests {
     @DisplayName("test: CertificateHandler.java")
     class testCertificateHandler {
 
-        @Test
-        @DisplayName("Testing sendMessage method")
-        void testSendMessage() throws IOException {
-            byte[] messageByte = "Message".getBytes();
-            String recipient = "recipient";
-            String sender = "sender";
-            MessageTypes messageType = MessageTypes.USER_MESSAGE;
-            Message message = new Message(messageByte, recipient, sender, messageType);
 
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
-
-            // CertificateHandler = new CertificateHandler(null, null);
-
-            // Write the message to the output stream
-            objectOutputStream.writeObject(message);
-
-            // Verify the written bytes
-            byte[] writtenBytes = byteArrayOutputStream.toByteArray();
-
-            assertAll(
-                    () -> assertNotNull(writtenBytes),
-                    () -> assertTrue(writtenBytes.length > 0)
-            );
-        }
     }
 
 
@@ -328,6 +300,47 @@ public class UnitTests {
                     () -> assertEquals(out, user.getOut()),
                     () -> assertEquals("Negan", user.getCertificate())
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("Test: CertificateEncoder.java")
+    class testCertificateEncoder {
+        @Test
+        public void testEncode() throws Exception {
+            KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+            PublicKey publicKey = keyPair.getPublic();
+            Certificate certificate = new Certificate(publicKey, " subject");
+            CertificateEncoder encoder = new CertificateEncoder();
+            String pemData = encoder.encode(certificate);
+            String base64Encoded = pemData.replace(CertificateEncoder.HEADER, "").replace(CertificateEncoder.FOOTER, "").trim();
+            byte[] certBytes = Base64.getDecoder().decode(base64Encoded);
+            Certificate decodedCertificate = decodeCertificate(certBytes);
+            assertAll(
+                    ()-> assertTrue(pemData.startsWith(CertificateEncoder.HEADER)),
+                    ()-> assertTrue(pemData.endsWith(CertificateEncoder.FOOTER)),
+                    ()-> assertEquals(certificate, decodedCertificate)
+            );
+        }
+
+        @Test
+        public void testDecode() throws Exception {
+            KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+            PublicKey publicKey = keyPair.getPublic();
+            Certificate certificate = new Certificate(publicKey, "Test Subject");
+            CertificateEncoder encoder = new CertificateEncoder();
+            String pemData = encoder.encode(certificate);
+            Certificate decodedCertificate = encoder.decode(pemData);
+            
+            assertEquals(certificate, decodedCertificate);
+        }
+
+
+        private Certificate decodeCertificate(byte[] certBytes) throws IOException, ClassNotFoundException {
+            try (ByteArrayInputStream inputStream = new ByteArrayInputStream(certBytes);
+                 ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
+                return (Certificate) objectInputStream.readObject();
+            }
         }
     }
 }
