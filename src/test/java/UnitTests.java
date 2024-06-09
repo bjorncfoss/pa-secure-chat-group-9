@@ -4,13 +4,12 @@
 // *------------------------*
 
 // Include necessary imports
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.math.BigInteger;
 import java.net.BindException;
 import java.net.ServerSocket;
@@ -20,11 +19,13 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.util.Date;
+import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 // Main class for all Unit Tests
 public class UnitTests {
+
 
     @Test
     @DisplayName("Tests the Main Server Connection!")
@@ -42,6 +43,7 @@ public class UnitTests {
                     serverSocket.close();
                 }
             }
+
         } catch (Exception e) {
             fail("Main method should not throw an exception");
         }
@@ -150,6 +152,53 @@ public class UnitTests {
 
             assertAll(
                     () -> assertNotEquals(certificate1.hashCode(), certificate2.hashCode())
+            );
+        }
+    }
+
+
+    @Nested
+    @DisplayName("Test: CertificateEncoder.java")
+    class testCertificateEncoder {
+
+        private CertificateEncoder encoder;
+        private static final String HEADER = "-----BEGIN CERTIFICATE-----";
+        private static final String FOOTER = "-----END CERTIFICATE-----";
+
+        @BeforeEach
+        void setup() {
+            encoder = new CertificateEncoder();
+        }
+
+        @Test
+        @DisplayName("Test Certificate Encoding")
+        public void testEncode() throws Exception {
+            KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+            PublicKey publicKey = keyPair.getPublic();
+            Certificate certificate = new Certificate(publicKey, " subject");
+            String pemData = encoder.encode(certificate);
+
+            assertNotNull(pemData);
+            String base64Encoded = pemData.replace(HEADER, "").replace(FOOTER, "").trim();
+
+            assertAll(
+                    ()-> assertFalse(pemData.startsWith(HEADER)),
+                    ()-> assertFalse(pemData.endsWith(FOOTER))
+            );
+        }
+
+        @Test
+        @DisplayName("Test Certificate Decoding")
+        public void testDecode() throws Exception {
+            KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+            PublicKey publicKey = keyPair.getPublic();
+            Certificate certificate = new Certificate(publicKey, "Test Subject");
+            String pemData = encoder.encode(certificate);
+
+            Certificate decodedCertificate = encoder.decode(pemData);
+
+            assertAll(
+                    () -> assertEquals(certificate, decodedCertificate)
             );
         }
     }
