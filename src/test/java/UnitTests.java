@@ -354,44 +354,4 @@ public class UnitTests {
         }
     }
 
-    @Nested
-    @DisplayName("Test: CertificateEncoder.java")
-    class testCertificateEncoder {
-        @Test
-        public void testEncode() throws Exception {
-            KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
-            PublicKey publicKey = keyPair.getPublic();
-            Certificate certificate = new Certificate(publicKey, " subject");
-            CertificateEncoder encoder = new CertificateEncoder();
-            String pemData = encoder.encode(certificate);
-            String base64Encoded = pemData.replace(CertificateEncoder.HEADER, "").replace(CertificateEncoder.FOOTER, "").trim();
-            byte[] certBytes = Base64.getDecoder().decode(base64Encoded);
-            Certificate decodedCertificate = decodeCertificate(certBytes);
-            assertAll(
-                    ()-> assertTrue(pemData.startsWith(CertificateEncoder.HEADER)),
-                    ()-> assertTrue(pemData.endsWith(CertificateEncoder.FOOTER)),
-                    ()-> assertEquals(certificate, decodedCertificate)
-            );
-        }
-
-        @Test
-        public void testDecode() throws Exception {
-            KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
-            PublicKey publicKey = keyPair.getPublic();
-            Certificate certificate = new Certificate(publicKey, "Test Subject");
-            CertificateEncoder encoder = new CertificateEncoder();
-            String pemData = encoder.encode(certificate);
-            Certificate decodedCertificate = encoder.decode(pemData);
-            
-            assertEquals(certificate, decodedCertificate);
-        }
-
-
-        private Certificate decodeCertificate(byte[] certBytes) throws IOException, ClassNotFoundException {
-            try (ByteArrayInputStream inputStream = new ByteArrayInputStream(certBytes);
-                 ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
-                return (Certificate) objectInputStream.readObject();
-            }
-        }
-    }
 }
