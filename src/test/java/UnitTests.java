@@ -8,11 +8,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.util.Date;
@@ -110,7 +114,34 @@ public class UnitTests {
 
 
     }
+/*
+    @Nested
+    @DisplayName("test: CertificateHandler.java")
+    class testCertificateHandler{
+        private Message message;
+        @Test
+        @DisplayName("Testing sendMessage method")
+        void testSendMessage() throws IOException {
+            byte[] messageByte = "Message".getBytes();
+            String recipient = "recipient";
+            String sender = "sender";
+            MessageTypes messageType = MessageTypes.USER_MESSAGE;
+            message = new Message(messageByte, recipient, sender,messageType);
 
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+            CertificateHandler certificateHandler = new CertificateHandler(null, null);
+            //certificateHandler.sendMessage(message);
+
+            // Verify the written bytes
+            byte[] writtenBytes = byteArrayOutputStream.toByteArray();
+            assertNotNull(writtenBytes);
+            assertTrue(writtenBytes.length > 0);
+        }
+
+    }
+
+*/
     // Encryption.java related
 
     @Nested
@@ -143,6 +174,29 @@ public class UnitTests {
             byte[] digest = Integrity.generateDigest(message);
 
             assertTrue(Integrity.verifyDigest(digest, Integrity.generateDigest(message)));
+        }
+    }
+
+    @Nested
+    @DisplayName("test: KeyMessage.java")
+    class testKeyMessage{
+        @Test
+        @DisplayName("testing the public key iguality")
+        public void testingKeyMessage() throws Exception {
+            KeyPair keyPair = generateKeyPair();
+            PublicKey publicKey = keyPair.getPublic();
+
+            KeyMessage keyMessage = new KeyMessage(publicKey, "recipient", "sender");
+
+            assertEquals(MessageTypes.KEY_MESSAGE, keyMessage.getMessageType());
+
+            assertEquals(publicKey, keyMessage.getPublicKey());
+        }
+
+        private KeyPair generateKeyPair() throws Exception {
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(2048);
+            return keyPairGenerator.generateKeyPair();
         }
     }
 
@@ -203,4 +257,23 @@ public class UnitTests {
         }
     }
 
+    @Nested
+    @DisplayName("Test: User.java")
+    class testUser{
+        @Test
+        @DisplayName("testing User equality")
+        void testUserEquals() throws Exception {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream out = new ObjectOutputStream(bos);
+
+            User user = new User("Rick Grimes", out, "Negan");
+
+            assertEquals("Rick Grimes", user.getName());
+
+            assertEquals(out, user.getOut());
+
+            assertEquals("Negan", user.getCertificate());
+        }
+
+    }
 }
