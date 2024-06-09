@@ -15,35 +15,39 @@ import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
-import java.util.Base64;
 import java.util.Date;
-import java.util.Base64;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-// Main class for all Unit Tests
-public class UnitTests {
+public class UnitTests
+{
 
+    @Nested
+    @DisplayName("Test: MainServer.java ")
+    class testMainServer {
 
-    @Test
-    @DisplayName("Tests the Main Server Connection!")
-    public void testMainServer() {
-        try {
-            ServerSocket serverSocket = null;
+        @Test
+        @DisplayName("Tests the Main Server Connection!")
+        public void testMainServerConnection() {
             try {
-                MainServer.main(new String[]{});
-                serverSocket = new ServerSocket(9000);
-                fail("Server socket should already be in use");
-            } catch (BindException e) {
-                // expected exception, server socket is already in use
-            } finally {
-                if (serverSocket != null) {
-                    serverSocket.close();
+                ServerSocket serverSocket = null;
+                try {
+                    MainServer.main(new String[]{});
+                    serverSocket = new ServerSocket(9000);
+                    fail("Server socket should already be in use");
+                } catch (BindException e) {
+                    // expected exception, server socket is already in use
+                } finally {
+                    if (serverSocket != null) {
+                        serverSocket.close();
+                    }
                 }
-            }
 
-        } catch (Exception e) {
-            fail("Main method should not throw an exception");
+            } catch (Exception e) {
+                fail("Main method should not throw an exception");
+            }
         }
     }
 
@@ -171,6 +175,7 @@ public class UnitTests {
         @Test
         @DisplayName("Test Certificate Encoding")
         public void testEncode() throws Exception {
+
             KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
             PublicKey publicKey = keyPair.getPublic();
             Certificate certificate = new Certificate(publicKey, " subject");
@@ -207,6 +212,85 @@ public class UnitTests {
     class testCertificateHandler {
 
 
+    }
+
+    @Nested
+    @DisplayName("Test: CertificateServer.java ")
+    class CertificateServerTest {
+
+        @Test
+        @DisplayName("Test the Certificate Server Connection!")
+        public void testMain() throws Exception {
+            ServerSocket serverSocket = new ServerSocket(8100);
+            KeyPair keyPair = Encryption.generateKeyPair();
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
+            executorService.submit(() -> {
+                try {
+                    // Call the main method using the class name
+                    CertificateServer.main(new String[] {});
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            Socket client = new Socket("localhost", 8100);
+
+            assertAll(
+                    () -> assertNotNull(client),
+                    () -> assertEquals("localhost/127.0.0.1:8100", client.getRemoteSocketAddress().toString())
+            );
+
+            client.close();
+            serverSocket.close();
+        }
+
+    }
+
+    @Nested
+    @DisplayName("Test: ClientHandler.java")
+    class testClientHandler {
+
+    }
+
+    @Nested
+    @DisplayName("test: DiffieHellman.java")
+    class testDiffieHellman {
+        @Test
+        @DisplayName("Testing generatePrivateKey method")
+        public void testGeneratePrivateKey() throws NoSuchAlgorithmException {
+            BigInteger privateKey = DiffieHellman.generatePrivateKey();
+
+            assertAll(
+                    () -> assertNotNull(privateKey)
+            );
+        }
+
+        @Test
+        @DisplayName("Testing generatePublicKey method")
+        public void testGeneratePublicKey() throws NoSuchAlgorithmException {
+            BigInteger privateKey = DiffieHellman.generatePrivateKey();
+            BigInteger publicKey = DiffieHellman.generatePublicKey(privateKey);
+
+            assertAll(
+                    () -> assertNotNull(publicKey)
+            );
+        }
+
+        @Test
+        @DisplayName("Testing computeSecret method")
+        public void testComputeSecret() throws NoSuchAlgorithmException {
+            BigInteger User1PrivateKey = DiffieHellman.generatePrivateKey();
+            BigInteger User2PrivateKey = DiffieHellman.generatePrivateKey();
+
+            BigInteger User1PublicKey = DiffieHellman.generatePublicKey(User1PrivateKey);
+            BigInteger User2PublicKey = DiffieHellman.generatePublicKey(User2PrivateKey);
+
+            BigInteger User1Secret = DiffieHellman.computeSecret(User2PublicKey, User1PrivateKey);
+            BigInteger User2Secret = DiffieHellman.computeSecret(User1PublicKey, User2PrivateKey);
+
+            assertAll(
+                    () -> assertEquals(User1Secret, User2Secret)
+            );
+        }
     }
 
 
@@ -286,49 +370,6 @@ public class UnitTests {
                     () -> assertEquals(recipient, message.getRecipient()),
                     () -> assertEquals(sender, message.getSender()),
                     () -> assertEquals(messageType, message.getMessageType())
-            );
-        }
-    }
-
-
-    @Nested
-    @DisplayName("test: DiffieHellman.java")
-    class testDiffieHellman{
-        @Test
-        @DisplayName("Testing generatePrivateKey method")
-        public void testGeneratePrivateKey() throws NoSuchAlgorithmException {
-            BigInteger privateKey = DiffieHellman.generatePrivateKey();
-
-            assertAll(
-                    () -> assertNotNull(privateKey)
-            );
-        }
-
-        @Test
-        @DisplayName("Testing generatePublicKey method")
-        public void testGeneratePublicKey() throws NoSuchAlgorithmException {
-            BigInteger privateKey = DiffieHellman.generatePrivateKey();
-            BigInteger publicKey = DiffieHellman.generatePublicKey(privateKey);
-
-            assertAll(
-                    () -> assertNotNull(publicKey)
-            );
-        }
-
-        @Test
-        @DisplayName("Testing computeSecret method")
-        public void testComputeSecret() throws NoSuchAlgorithmException {
-            BigInteger User1PrivateKey = DiffieHellman.generatePrivateKey();
-            BigInteger User2PrivateKey = DiffieHellman.generatePrivateKey();
-
-            BigInteger User1PublicKey = DiffieHellman.generatePublicKey(User1PrivateKey);
-            BigInteger User2PublicKey = DiffieHellman.generatePublicKey(User2PrivateKey);
-
-            BigInteger User1Secret = DiffieHellman.computeSecret(User2PublicKey, User1PrivateKey);
-            BigInteger User2Secret = DiffieHellman.computeSecret(User1PublicKey, User2PrivateKey);
-
-            assertAll(
-                    () -> assertEquals(User1Secret, User2Secret)
             );
         }
     }
