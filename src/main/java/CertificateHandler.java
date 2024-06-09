@@ -72,7 +72,7 @@ public class CertificateHandler implements Runnable {
      * @throws IOException if an I/O error occurs when opening the socket
      * @throws ClassNotFoundException if the object read from the input stream is null
      */
-    private void process(Message message) throws IOException, ClassNotFoundException {
+    protected void process(Message message) throws IOException, ClassNotFoundException {
         switch (message.getMessageType()) {
             case USER_MESSAGE:
                 sendMessage(message);
@@ -92,7 +92,7 @@ public class CertificateHandler implements Runnable {
      * @param messageObj The Message object to be sent.
      * @throws IOException If an I/O error occurs while writing the message.
      */
-    private void sendMessage(Message messageObj) throws IOException {
+    protected void sendMessage(Message messageObj) throws IOException {
         out.writeObject(messageObj);
         out.flush();
     }
@@ -101,7 +101,7 @@ public class CertificateHandler implements Runnable {
      * @param messageObj
      * @throws IOException if an I/O error occurs when opening the socket
      */
-    private void validateCertificate(Message messageObj) throws IOException {
+    protected void validateCertificate(Message messageObj) throws IOException {
         String username = messageObj.getSender();
         //Certificate certificate = messageObj.getCertificate();
     }
@@ -112,7 +112,7 @@ public class CertificateHandler implements Runnable {
      * @param messageObj the message containing the filename of the certificate to be signed
      * @throws IOException if an I/O error occurs when reading or deleting the certificate file
      */
-    private void signCertificate(Message messageObj) throws IOException {
+    protected void signCertificate(Message messageObj) throws IOException {
             String fileName= new String(messageObj.getMessage());
             Path path = Path.of( "src/SignCertificates/" + fileName );
             String fileContent = Files.readString(  path );
@@ -139,7 +139,7 @@ public class CertificateHandler implements Runnable {
      * @param certificate the original certificate used as a template for the new certificate
      * @return the new certificate with updated issuer and emission date
      */
-    private Certificate createCertificate( Certificate certificate)
+    protected Certificate createCertificate(Certificate certificate)
     {
         //Create a new certificate for the serialNumber be correct;
         Certificate newCertificate = new Certificate(certificate.getPublicRSAKey(),certificate.getSubject());
@@ -154,7 +154,7 @@ public class CertificateHandler implements Runnable {
      * @param certificate The Certificate object to be validated.
      * @return true if the certificate is valid; otherwise, false.
      */
-    private boolean isCertificateValid(Certificate certificate) {
+    protected boolean isCertificateValid(Certificate certificate) {
         // TODO: Implement certificate validation here
         return true;
     }
