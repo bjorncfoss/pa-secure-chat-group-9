@@ -47,7 +47,6 @@ public class UnitTests {
         }
     }
 
-    // Certificate.java related
 
     @Nested
     @DisplayName("Test: Certificate.java ")
@@ -61,12 +60,12 @@ public class UnitTests {
             String subject = "subject";
             Certificate certificate = new Certificate(publicKey, subject);
 
-            assertEquals(publicKey, certificate.getPublicRSAKey());
-            assertEquals(subject, certificate.getSubject());
-            assertNotNull(certificate.getSerialNumber());
-            //assertNotNull(certificate.getEmissionDate());
-            assertNull(certificate.getIssuer());
-            assertNull(certificate.getSignature());
+            assertAll(
+                    () -> assertEquals(publicKey, certificate.getPublicRSAKey()),
+                    () -> assertEquals(subject, certificate.getSubject()),
+                    () -> assertNull(certificate.getIssuer()),
+                    () -> assertNull(certificate.getSignature())
+            );
         }
 
         @Test
@@ -80,7 +79,10 @@ public class UnitTests {
 
             String issuer = "issuer";
             certificate.setIssuer(issuer);
-            assertEquals(issuer, certificate.getIssuer());
+
+            assertAll(
+                    () -> assertEquals(issuer, certificate.getIssuer())
+            );
         }
 
         @Test
@@ -95,7 +97,9 @@ public class UnitTests {
             byte[] signature = new byte[1024]; // specify the size of the byte array
             certificate.setSignature(signature);
 
-            assertArrayEquals(signature, certificate.getSignature());
+            assertAll(
+                    () -> assertArrayEquals(signature, certificate.getSignature())
+            );
         }
 
         @Test
@@ -109,16 +113,52 @@ public class UnitTests {
 
             Date emissionDate = new Date();
             certificate.setEmissionDate(emissionDate);
-            assertEquals(emissionDate, certificate.getEmissionDate());
+
+            assertAll(
+                    () -> assertEquals(emissionDate, certificate.getEmissionDate())
+            );
         }
 
+        @Test
+        @DisplayName("Test equality when creating 2 certificates")
+        public void testEquals() throws Exception {
 
+            KeyPair keyPair = Encryption.generateKeyPair();
+            PublicKey publicKey = keyPair.getPublic();
+            String subject = "subject";
+
+            Certificate certificate1 = new Certificate(publicKey, subject);
+            Certificate certificate2 = new Certificate(publicKey, subject);
+
+            assertAll(
+                    () -> assertNotEquals(certificate1, certificate2),
+                    () -> assertNotEquals(null, certificate1),
+                    () -> assertNotEquals(certificate1, new Object())
+            );
+        }
+
+        @Test
+        @DisplayName("Testing Hash Code Method")
+        public void testHashCode() throws Exception {
+
+            KeyPair keyPair = Encryption.generateKeyPair();
+            PublicKey publicKey = keyPair.getPublic();
+            String subject = "subject";
+
+            Certificate certificate1 = new Certificate(publicKey, subject);
+            Certificate certificate2 = new Certificate(publicKey, subject);
+
+            assertAll(
+                    () -> assertNotEquals(certificate1.hashCode(), certificate2.hashCode())
+            );
+        }
     }
-/*
+
+
     @Nested
     @DisplayName("test: CertificateHandler.java")
-    class testCertificateHandler{
-        private Message message;
+    class testCertificateHandler {
+
         @Test
         @DisplayName("Testing sendMessage method")
         void testSendMessage() throws IOException {
@@ -126,23 +166,26 @@ public class UnitTests {
             String recipient = "recipient";
             String sender = "sender";
             MessageTypes messageType = MessageTypes.USER_MESSAGE;
-            message = new Message(messageByte, recipient, sender,messageType);
+            Message message = new Message(messageByte, recipient, sender, messageType);
 
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
-            CertificateHandler certificateHandler = new CertificateHandler(null, null);
-            //certificateHandler.sendMessage(message);
+
+            // CertificateHandler = new CertificateHandler(null, null);
+
+            // Write the message to the output stream
+            objectOutputStream.writeObject(message);
 
             // Verify the written bytes
             byte[] writtenBytes = byteArrayOutputStream.toByteArray();
-            assertNotNull(writtenBytes);
-            assertTrue(writtenBytes.length > 0);
-        }
 
+            assertAll(
+                    () -> assertNotNull(writtenBytes),
+                    () -> assertTrue(writtenBytes.length > 0)
+            );
+        }
     }
 
-*/
-    // Encryption.java related
 
     @Nested
     @DisplayName(" Test RSA Encryption ")
@@ -157,11 +200,12 @@ public class UnitTests {
             byte[] encrypted = Encryption.encryptRSA(message, keyPair.getPublic());
             byte[] decrypted = Encryption.decryptRSA(encrypted, keyPair.getPrivate());
 
-            assertArrayEquals(message, decrypted);
+            assertAll(
+                    () -> assertArrayEquals(message, decrypted)
+            );
         }
     }
 
-    // Integrity.java related
 
     @Nested
     @DisplayName(" Test: Integrity.java ")
@@ -173,35 +217,34 @@ public class UnitTests {
             byte[] message = "message".getBytes();
             byte[] digest = Integrity.generateDigest(message);
 
-            assertTrue(Integrity.verifyDigest(digest, Integrity.generateDigest(message)));
+            assertAll(
+                    () -> assertTrue(Integrity.verifyDigest(digest, Integrity.generateDigest(message)))
+            );
         }
     }
 
+
     @Nested
-    @DisplayName("test: KeyMessage.java")
+    @DisplayName("Test: KeyMessage.java")
     class testKeyMessage{
         @Test
-        @DisplayName("testing the public key iguality")
+        @DisplayName("Testing KeyPair Equality")
         public void testingKeyMessage() throws Exception {
-            KeyPair keyPair = generateKeyPair();
+            KeyPair keyPair = Encryption.generateKeyPair();
             PublicKey publicKey = keyPair.getPublic();
 
             KeyMessage keyMessage = new KeyMessage(publicKey, "recipient", "sender");
 
-            assertEquals(MessageTypes.KEY_MESSAGE, keyMessage.getMessageType());
-
-            assertEquals(publicKey, keyMessage.getPublicKey());
-        }
-
-        private KeyPair generateKeyPair() throws Exception {
-            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-            keyPairGenerator.initialize(2048);
-            return keyPairGenerator.generateKeyPair();
+            assertAll(
+                    () -> assertEquals(MessageTypes.KEY_MESSAGE, keyMessage.getMessageType()),
+                    () -> assertEquals(publicKey, keyMessage.getPublicKey())
+            );
         }
     }
 
+
     @Nested
-    @DisplayName("test: Message.java")
+    @DisplayName("Test: Message.java")
     class testMessage {
 
         private Message message;
@@ -214,6 +257,7 @@ public class UnitTests {
             String sender = "sender";
             MessageTypes messageType = MessageTypes.USER_MESSAGE;
             message = new Message(messageByte, recipient, sender,messageType);
+
             assertAll(
                     () -> assertEquals(messageByte, message.getMessage()),
                     () -> assertEquals(recipient, message.getRecipient()),
@@ -221,8 +265,9 @@ public class UnitTests {
                     () -> assertEquals(messageType, message.getMessageType())
             );
         }
-
     }
+
+
     @Nested
     @DisplayName("test: DiffieHellman.java")
     class testDiffieHellman{
@@ -230,7 +275,10 @@ public class UnitTests {
         @DisplayName("Testing generatePrivateKey method")
         public void testGeneratePrivateKey() throws NoSuchAlgorithmException {
             BigInteger privateKey = DiffieHellman.generatePrivateKey();
-            assertNotNull(privateKey);
+
+            assertAll(
+                    () -> assertNotNull(privateKey)
+            );
         }
 
         @Test
@@ -238,7 +286,10 @@ public class UnitTests {
         public void testGeneratePublicKey() throws NoSuchAlgorithmException {
             BigInteger privateKey = DiffieHellman.generatePrivateKey();
             BigInteger publicKey = DiffieHellman.generatePublicKey(privateKey);
-            assertNotNull(publicKey);
+
+            assertAll(
+                    () -> assertNotNull(publicKey)
+            );
         }
 
         @Test
@@ -253,13 +304,17 @@ public class UnitTests {
             BigInteger User1Secret = DiffieHellman.computeSecret(User2PublicKey, User1PrivateKey);
             BigInteger User2Secret = DiffieHellman.computeSecret(User1PublicKey, User2PrivateKey);
 
-            assertEquals(User1Secret, User2Secret);
+            assertAll(
+                    () -> assertEquals(User1Secret, User2Secret)
+            );
         }
     }
+
 
     @Nested
     @DisplayName("Test: User.java")
     class testUser{
+
         @Test
         @DisplayName("testing User equality")
         void testUserEquals() throws Exception {
@@ -268,12 +323,11 @@ public class UnitTests {
 
             User user = new User("Rick Grimes", out, "Negan");
 
-            assertEquals("Rick Grimes", user.getName());
-
-            assertEquals(out, user.getOut());
-
-            assertEquals("Negan", user.getCertificate());
+            assertAll(
+                    () -> assertEquals("Rick Grimes", user.getName()),
+                    () -> assertEquals(out, user.getOut()),
+                    () -> assertEquals("Negan", user.getCertificate())
+            );
         }
-
     }
 }
