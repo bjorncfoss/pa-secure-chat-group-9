@@ -2,8 +2,8 @@ import java.io.*;
 import java.util.Base64;
 
 public class CertificateEncoder {
-    private static final String HEADER = "-----BEGIN CUSTOM CERTIFICATE-----";
-    private static final String FOOTER = "-----END CUSTOM CERTIFICATE-----";
+    protected static final String HEADER = "-----BEGIN CUSTOM CERTIFICATE-----";
+    protected static final String FOOTER = "-----END CUSTOM CERTIFICATE-----";
 
     /**
      * Encodes the specified {@link Certificate} into a custom PEM format string.
