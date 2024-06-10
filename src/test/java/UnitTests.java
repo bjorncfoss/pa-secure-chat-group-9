@@ -6,19 +6,16 @@
 // Include necessary imports
 import org.junit.jupiter.api.*;
 
-import javax.security.auth.Subject;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.*;
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.ReentrantLock;
+import java.security.SecureRandom;
 
 // Includes all type of Asserts
 import static org.junit.jupiter.api.Assertions.*;
@@ -52,35 +49,8 @@ public class UnitTests
             }
         }
     }
-    /*
-    @Nested
-    @DisplayName("Test: MainClient.java")
-    class testMainClient{
-        @Test
-        @DisplayName("Tests the Main Client Connection!")
-        public void testMain() throws Exception {
-            try {
-                ServerSocket serverSocket = null;
-                try {
-                    MainServer.main(new String[]{});
-                    serverSocket = new ServerSocket(9000);
-                    MainClient.main(new String[] {});
-                    Client client = new Client(9000, 8100);
-                    assertNotNull(client);
-                } catch (BindException e) {
-                    // expected exception, server socket is already in use
-                } finally {
-                    if (serverSocket != null) {
-                        serverSocket.close();
-                    }
-                }
 
-            } catch (Exception e) {
-                fail("Main method should not throw an exception");
-            }
-        }
-    }
-*/
+
     @Nested
     @DisplayName("Test: Certificate.java ")
     class CertificateTest {
@@ -332,7 +302,7 @@ public class UnitTests
 
         @Test
         @DisplayName("Testing the validateCertificate method")
-        public void testvalidateCertificate() throws Exception {
+        public void testValidateCertificate() throws Exception {
             Message message = new Message(new byte[0], "recipient", "sender", MessageTypes.CERTIFICATE_VALIDATION);
             out.writeObject(message);
             out.flush();
@@ -385,6 +355,59 @@ public class UnitTests
         }
     }
 
+    @Nested
+    @DisplayName("Test: Client.java")
+    class testClient {
+
+
+        @Test
+        @DisplayName("Tests the extractRecipients method to ensure it correctly extracts usernames from a message.")
+        void testExtractRecipients() {
+            String message = "@user1 Hello @user2, how are you @user3?";
+            List<String> recipients = Client.extractRecipients(message);
+
+            assertAll(
+                    () -> assertEquals(3, recipients.size()),
+                    () -> assertTrue(recipients.contains("user1")),
+                    () -> assertTrue(recipients.contains("user2")),
+                    () -> assertTrue(recipients.contains("user3"))
+            );
+        }
+
+        @Test
+        @DisplayName("Tests KeyPair Generator (Public & Private Keys)")
+        void testGenerateKeyPair() throws Exception {
+            KeyPair keyPair = Encryption.generateKeyPair();
+
+            assertAll(
+                    () -> assertNotNull(keyPair),
+                    () -> assertNotNull(keyPair.getPrivate()),
+                    () -> assertNotNull(keyPair.getPublic())
+            );
+        }
+
+        @Test
+        @DisplayName("Test to verify extracted message")
+        void testExtractMessage() {
+            String message = "@user1 Hello @user2, how are you @user3?";
+            String extractedMessage = Client.extractMessage(message);
+
+            assertAll(
+                    () -> assertEquals("Hello , how are you ?", extractedMessage)
+            );
+        }
+
+        @Test
+        void testCAPublicKey() throws Exception {
+
+            // Generate a key pair for the test
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+            keyGen.initialize(2048);
+            KeyPair keyPair = keyGen.generateKeyPair();
+            PublicKey expectedPublicKey = keyPair.getPublic();
+        }
+
+    }
 
     @Nested
     @DisplayName("Test: ClientHandler.java")
