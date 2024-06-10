@@ -4,10 +4,7 @@
 // *------------------------*
 
 // Include necessary imports
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import javax.security.auth.Subject;
 import java.io.*;
@@ -15,12 +12,12 @@ import java.math.BigInteger;
 import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.*;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 // Includes all type of Asserts
@@ -55,8 +52,35 @@ public class UnitTests
             }
         }
     }
+    /*
+    @Nested
+    @DisplayName("Test: MainClient.java")
+    class testMainClient{
+        @Test
+        @DisplayName("Tests the Main Client Connection!")
+        public void testMain() throws Exception {
+            try {
+                ServerSocket serverSocket = null;
+                try {
+                    MainServer.main(new String[]{});
+                    serverSocket = new ServerSocket(9000);
+                    MainClient.main(new String[] {});
+                    Client client = new Client(9000, 8100);
+                    assertNotNull(client);
+                } catch (BindException e) {
+                    // expected exception, server socket is already in use
+                } finally {
+                    if (serverSocket != null) {
+                        serverSocket.close();
+                    }
+                }
 
-
+            } catch (Exception e) {
+                fail("Main method should not throw an exception");
+            }
+        }
+    }
+*/
     @Nested
     @DisplayName("Test: Certificate.java ")
     class CertificateTest {
@@ -254,6 +278,79 @@ public class UnitTests
     @Nested
     @DisplayName("Test: CertificateHandler.java")
     class testCertificateHandler {
+
+        private ServerSocket serverSocket;
+        private Socket clientSocket;
+        private CertificateHandler certificateHandler;
+        private ObjectOutputStream out;
+        private ObjectInputStream in;
+        private KeyPair keyPair;
+        private ExecutorService executorService;
+
+        @BeforeEach
+        public void setUp() throws Exception {
+            KeyPairGenerator pairGenerator = KeyPairGenerator.getInstance("RSA");
+            pairGenerator.initialize(2048);
+            keyPair = pairGenerator.generateKeyPair();
+            serverSocket = new ServerSocket(0); // Use 0 to get a free port
+            int port = serverSocket.getLocalPort();
+            clientSocket = new Socket("localhost", port);
+            executorService = Executors.newSingleThreadExecutor();
+            executorService.submit(() -> {
+                try {
+                    Socket socket = serverSocket.accept();
+                    certificateHandler = new CertificateHandler(socket, keyPair);
+                    certificateHandler.run();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            out = new ObjectOutputStream(clientSocket.getOutputStream());
+            in = new ObjectInputStream(clientSocket.getInputStream());
+        }
+
+        @AfterEach
+        public void tearDown() throws Exception {
+            clientSocket.close();
+            serverSocket.close();
+            executorService.shutdown();
+        }
+
+        @Test
+        @DisplayName("Testing the Process method")
+        public void testProcess() throws Exception {
+            Message userMessage = new Message("Test message".getBytes(), "recipient", "sender", MessageTypes.USER_MESSAGE);
+            out.writeObject(userMessage);
+            out.flush();
+            Message message = (Message) in.readObject();
+            assertAll(
+                    ()->assertEquals(userMessage.getMessageType(), message.getMessageType()),
+                    ()->assertArrayEquals(userMessage.getMessage(), message.getMessage())
+            );
+
+        }
+
+        @Test
+        @DisplayName("Testing the validateCertificate method")
+        public void testvalidateCertificate() throws Exception {
+            Message message = new Message(new byte[0], "recipient", "sender", MessageTypes.CERTIFICATE_VALIDATION);
+            out.writeObject(message);
+            out.flush();
+        }
+
+        @Test
+        @DisplayName("Testing the SendMessage method")
+        public void testSendMessage() throws IOException, ClassNotFoundException {
+            Message message = new Message("Test".getBytes(), "recipient", "sender", MessageTypes.USER_MESSAGE);
+            out.writeObject(message);
+            out.flush();
+            Message receivedMessage = (Message) in.readObject();
+
+            assertAll(
+                    ()->assertEquals(message.getMessageType(), receivedMessage.getMessageType()),
+                    ()->assertArrayEquals(message.getMessage(), receivedMessage.getMessage())
+            );
+        }
 
     }
 
